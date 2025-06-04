@@ -8,7 +8,10 @@ import { addImports, addTemplate } from '@nuxt/kit';
 import { pascalCase } from 'es-toolkit';
 import { moduleFolderName } from './constants';
 
-type GenerateArgs = { moduleConfig: ResolvedConfig; nuxt: Nuxt };
+type GenerateArgs = {
+  moduleConfig: ResolvedConfig;
+  nuxt: Nuxt;
+};
 
 const openApiTsFileName = 'openapi-ts';
 

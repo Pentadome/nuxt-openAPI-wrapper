@@ -12,6 +12,7 @@ import type {
   PickFrom,
   KeysOf,
 } from '../node_modules/nuxt/dist/app/composables/asyncData';
+import type { Ref } from 'vue';
 
 type OmitStrict<Object, Key extends keyof Object> = Omit<Object, Key>;
 
