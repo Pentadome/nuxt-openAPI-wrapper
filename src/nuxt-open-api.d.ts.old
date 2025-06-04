@@ -1,0 +1,6 @@
+import type { Fetch as _Fetch, UseFetch as _UseFetch } from './nuxt-open-api';
+
+declare module '#nuxt-open-api' {
+  type Fetch = _Fetch;
+  type UseFetch = _UseFetch;
+}

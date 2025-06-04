@@ -1,0 +1,26 @@
+import type { OpenAPITSOptions } from 'openapi-typescript';
+
+export const hooks = {
+  openApiTs: {
+    transform: 'nuxt-open-api:build/openapi-ts/transform',
+    postTransform: 'nuxt-open-api:build/openapi-ts/postTransform',
+  },
+} as const;
+
+type OpenApiTsHooks = {
+  transform: (
+    ...args: Parameters<Required<OpenAPITSOptions>['transform']>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ) => Promise<any>;
+  postTransform: (
+    ...args: Parameters<Required<OpenAPITSOptions>['postTransform']>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ) => Promise<any>;
+};
+
+export interface ModuleHooks {
+  /** @see https://openapi-ts.dev/node#transform-posttransform */
+  'nuxt-open-api:build/openapi-ts/transform': OpenApiTsHooks['transform'];
+  /** @see https://openapi-ts.dev/node#transform-posttransform */
+  'nuxt-open-api:build/openapi-ts/postTransform': OpenApiTsHooks['postTransform'];
+}
