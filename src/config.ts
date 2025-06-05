@@ -1,16 +1,17 @@
 import defu from 'defu';
 import type { OpenAPITSOptions, OpenAPI3 } from 'openapi-typescript';
+import type { OmitStrict } from './typeUtils';
 
 export type AutoDiscoverConfig = {
   /** @default 'openapi' */
   dirname?: string;
-  /** @default 'openapi.{json|yaml}' */
+  /** @default 'openapi.{json,yaml}' */
   openApiFileName?: string;
 };
 
 // Module options TypeScript interface definition
 export interface ModuleOptions<
-  AutoDiscover extends false | AutoDiscoverConfig = false | AutoDiscoverConfig,
+  AutoDiscover extends false | AutoDiscoverConfig = AutoDiscoverConfig,
   RequireOpenApiObject extends AutoDiscover extends false
     ? true
     : false = AutoDiscover extends false ? true : false,
@@ -24,8 +25,8 @@ export interface ModuleOptions<
 }
 
 export type GlobalOrSpecificOptions = {
-  /** @default { pathParamsAsTypes: true } */
-  openApiTsConfig?: OpenAPITSOptions;
+  /** @default { generatePathParams: true } */
+  openApiTsConfig?: OmitStrict<OpenAPITSOptions, 'pathParamsAsTypes'>;
 };
 
 export type ApiConfig<RequireOpenApiObject extends boolean = false> =
@@ -46,10 +47,10 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
 export const defaultConfig = {
   autoDiscover: {
     dirname: 'openapi',
-    openApiFileName: 'openapi.{json|yaml}',
+    openApiFileName: 'openapi.{json,yaml}',
   },
   apis: {},
-  openApiTsConfig: { pathParamsAsTypes: true },
+  openApiTsConfig: { generatePathParams: true },
   autoImport: true,
 } as const satisfies ModuleOptions<AutoDiscoverConfig, false>;
 

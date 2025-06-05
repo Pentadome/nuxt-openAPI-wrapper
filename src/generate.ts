@@ -4,7 +4,7 @@ import path from 'node:path';
 import { globSync } from 'node:fs';
 import assert from 'node:assert';
 import openapiTS, { astToString } from 'openapi-typescript';
-import { addImports, addTemplate } from '@nuxt/kit';
+import { addImports, addTemplate, createResolver } from '@nuxt/kit';
 import { pascalCase } from 'es-toolkit';
 import { moduleFolderName } from './constants';
 
@@ -12,6 +12,9 @@ type GenerateArgs = {
   moduleConfig: ResolvedConfig;
   nuxt: Nuxt;
 };
+
+// prevent ide errors when using ts-expect-error is string template.
+const tsIgnoreError = '//' + '  @ts-ignore-error';
 
 const openApiTsFileName = 'openapi-ts';
 
@@ -44,43 +47,85 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
     const useClientName = `use${pascalCasedName}Fetch`;
     const useLazyClientName = `useLazy${pascalCasedName}Fetch`;
 
-    const { filename } = addTemplate({
+    const resolver = createResolver(import.meta.url);
+
+    const { dst } = addTemplate({
       filename: clientPath,
       write: true,
       getContents: () => {
-        return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName};
-import type { Fetch, UseFetch, UseLazyFetch } from '#nuxt-open-api';
-import { useFetch, useLazyFetch } from '#app';
+        return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
+import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./nuxt-open-api')}';
+import { useFetch, useLazyFetch } from 'nuxt/app';
+import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
 
-export type ${pathsTypeName};
+export type { paths as ${pathsTypeName} } from './${openApiTsFileName}'
 
-export const ${clientName} = $fetch as unknown as Fetch<${pathsTypeName}>;
+${tsIgnoreError} 
+export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
+  ${tsIgnoreError} 
+  const options: SimplifiedFetchOptions = (opts as unknown as SimplifiedFetchOptions) ?? {}
+  options.baseURL ??= "${apiConfig.baseUrl}"
 
-export const ${useClientName} = useFetch as unknown as UseFetch<${pathsTypeName}>;
+  let finalPath = path as string
+  if (options.pathParams) {
+      finalPath = handleFetchPathParams(path, options.pathParams)
+  }
 
-export const ${useLazyClientName} = useLazyFetch as unknown as UseLazyFetch<${pathsTypeName}>;
+  const { pathParams, ...rest } = options;
+  
+  ${tsIgnoreError} 
+  return $fetch(finalPath, rest)
+};
+
+${tsIgnoreError} 
+export const ${useClientName}: UseFetch<${pathsTypeName}> =  (path, opts?) => {
+  ${tsIgnoreError} 
+  const options: SimplifiedUseFetchOptions = (opts as unknown as SimplifiedUseFetchOptions) ?? {}
+  options.baseURL ??= "${apiConfig.baseUrl}"
+
+  let finalPath = path as string | Ref<string> | (() => string)
+  if (options.pathParams) {
+      finalPath = handleUseFetchPathParams(path, options.pathParams)
+  }
+
+  const { pathParams, ...rest } = options;
+  
+  ${tsIgnoreError} 
+  return useFetch(finalPath, rest)
+};
+
+${tsIgnoreError}
+export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?) => {
+  ${tsIgnoreError} 
+  const options: SimplifiedUseFetchOptions = opts ? {...(opts as unknown as SimplifiedUseFetchOptions), lazy: true } : { lazy: true }
+
+  ${tsIgnoreError}
+  return ${useClientName}(path, options);
+}
 `;
       },
     });
+
+    console.log(dst);
 
     if (apiConfig.autoImport ?? moduleConfig.autoImport)
       addImports([
         {
           name: pathsTypeName,
-          from: filename,
+          from: dst,
           type: true,
         },
         {
           name: clientName,
-          from: filename,
+          from: dst,
         },
         {
           name: useClientName,
-          from: filename,
+          from: dst,
         },
         {
           name: useLazyClientName,
-          from: filename,
+          from: dst,
         },
       ]);
   }
@@ -117,8 +162,10 @@ const getOpenApiTs = async ({
     collectionName,
   });
 
+  console.log(optionsFilePath);
+
   return await openapiTS(
-    optionsFilePath,
+    new URL(optionsFilePath),
     moduleConfig.openApiTsConfig ?? apiConfig.openApiTsConfig,
   );
 };
@@ -140,15 +187,12 @@ const discoverOpenApiObjectFilePath = ({
 
   const triedPaths = [] as string[];
   for (const layer of nuxt.options._layers) {
-    const globFilePath = path.join(
-      layer.cwd,
-      dirname,
-      collectionName,
-      openApiFileName,
-    );
-    const findResult = globSync(globFilePath);
+    const globCwdPath = path.join(layer.cwd, dirname, collectionName);
+    const findResult = globSync(`**/${openApiFileName}`, {
+      cwd: globCwdPath,
+    });
     if (findResult.length === 0) {
-      triedPaths.push(globFilePath);
+      triedPaths.push(path.join(globCwdPath, openApiFileName));
       continue;
     }
     if (findResult.length > 1)
@@ -156,7 +200,7 @@ const discoverOpenApiObjectFilePath = ({
         `Ambiguous open api object match: \n${JSON.stringify(findResult)}`,
       );
 
-    return findResult[0];
+    return path.join(globCwdPath, findResult[0]);
   }
 
   throw new Error(

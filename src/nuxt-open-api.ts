@@ -13,27 +13,19 @@ import type {
   KeysOf,
 } from '../node_modules/nuxt/dist/app/composables/asyncData';
 import type { Ref } from 'vue';
-
-type OmitStrict<Object, Key extends keyof Object> = Omit<Object, Key>;
+import type {
+  HasRequiredProperties,
+  OmitStrict,
+  ComputedOptions,
+  InnerComputedOptions,
+} from './typeUtils';
 
 type UntypedFetchOptions = OmitStrict<
   FetchOptions,
-  'body' | 'method' | 'params' | 'query'
+  'body' | 'method' | 'params' | 'query' | 'headers'
 >;
 
 // useFetch
-type UntypedUseFetchOptions<
-  ResT,
-  DataT = ResT,
-  PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
-  DefaultT = DefaultAsyncDataValue,
-  R extends NitroFetchRequest = string & {},
-  M extends AvailableRouterMethod<R> = AvailableRouterMethod<R>,
-> = OmitStrict<
-  UseFetchOptions<ResT, DataT, PickKeys, DefaultT, R, M>,
-  'body' | 'method' | 'params' | 'query'
->;
-
 type UntypedUseLazyFetchOptions<
   ResT,
   DataT = ResT,
@@ -42,8 +34,8 @@ type UntypedUseLazyFetchOptions<
   R extends NitroFetchRequest = string & {},
   M extends AvailableRouterMethod<R> = AvailableRouterMethod<R>,
 > = OmitStrict<
-  UntypedUseFetchOptions<ResT, DataT, PickKeys, DefaultT, R, M>,
-  'lazy'
+  UseFetchOptions<ResT, DataT, PickKeys, DefaultT, R, M>,
+  'body' | 'method' | 'params' | 'query' | 'headers' | 'lazy'
 >;
 
 type HTTPMethod =
@@ -57,7 +49,7 @@ type HTTPMethod =
   | 'OPTIONS'
   | 'TRACE';
 
-type SupportedHttpMethod<
+type GetSupportedHttpMethod<
   Paths extends Record<string, any>,
   Path extends keyof Paths,
 > = {
@@ -71,69 +63,118 @@ type SupportedHttpMethod<
 type StartWith2<StatusCode extends number> =
   `${StatusCode}` extends `2${string}` ? StatusCode : never;
 
-type Get2xxReponses<Responses extends Record<number, unknown>> = {
-  [key in keyof Responses]: key extends number
-    ? StartWith2<key> extends never
-      ? never
-      : Responses[key] extends {
-            content: {
-              'application/json': Record<string, any>;
-            };
-          }
-        ? Responses[key]['content']['application/json']
-        : never
-    : never;
-}[keyof Responses];
+type Get2xxReponses<Operation> = Operation extends { responses: unknown }
+  ? {
+      [key in keyof Operation['responses']]: key extends number
+        ? StartWith2<key> extends never
+          ? never
+          : Operation[key] extends {
+                content: {
+                  'application/json': Record<string, any>;
+                };
+              }
+            ? Operation[key]['content']['application/json']
+            : never
+        : never;
+    }[keyof Operation['responses']]
+  : unknown;
 
-type ToQueryOptions<Object extends Record<string, unknown>> = Object extends
-  | never
-  | Record<string, never>
-  ? {}
-  : /* query and params are the same in ofetch */
-    { params: Object } | { query: Object };
+type GetBody<Operation> = Operation extends {
+  requestBody: {
+    content: {
+      'application/json': unknown;
+    };
+  };
+}
+  ? { body: Operation['requestBody']['content']['application/json'] }
+  : { body?: any };
 
-export type Fetch = <
-  Paths extends Record<string, any>,
+type GetPathParams<Operation> = Operation extends {
+  parameters: {
+    path: unknown;
+  };
+}
+  ? { pathParams: Operation['parameters']['path'] }
+  : {};
+
+type GetQueryParams<Operation> = Operation extends {
+  parameters: {
+    query: unknown;
+  };
+}
+  ? HasRequiredProperties<Operation['parameters']['query']> extends true
+    ?
+        | { params: Operation['parameters']['query'] }
+        | { query: Operation['parameters']['query'] }
+    :
+        | { params?: Operation['parameters']['query'] }
+        | { query?: Operation['parameters']['query'] }
+  : {};
+
+type GetHeaders<Operation> = Operation extends {
+  parameters: {
+    header: unknown;
+  };
+}
+  ? HasRequiredProperties<Operation['parameters']['header']> extends true
+    ? { headers: Operation['parameters']['header'] }
+    : { headers?: Operation['parameters']['header'] }
+  : {};
+
+type GetMethodProp<Method extends string> = Method extends 'get'
+  ? {
+      // method is optional when u can do get
+      method?: Method | Uppercase<Method>;
+    }
+  : {
+      method: Method | Uppercase<Method>;
+    };
+
+export type SimplifiedFetchOptions = FetchOptions & {
+  pathParams?: Record<string, string | number>;
+};
+
+export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
+  pathParams?: ComputedOptions<Record<string, string | number>>;
+};
+
+export type Fetch<Paths extends Record<string, any>> = <
   Path extends keyof Paths = keyof Paths,
-  Method extends SupportedHttpMethod<
+  Method extends GetSupportedHttpMethod<
     Paths,
     Path
-  > = 'get' extends SupportedHttpMethod<Paths, Path>
+  > = 'get' extends GetSupportedHttpMethod<Paths, Path>
     ? 'get'
-    : SupportedHttpMethod<Paths, Path>,
+    : GetSupportedHttpMethod<Paths, Path>,
+  MethodProp extends GetMethodProp<Method> = GetMethodProp<Method>,
   Operation extends Paths[Path][Method] = Paths[Path][Method],
-  Body extends Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {} = Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {},
-  Query extends Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {} = Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {},
-  Response extends Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown = Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown,
+  Body extends GetBody<Operation> = GetBody<Operation>,
+  PathParams extends GetPathParams<Operation> = GetPathParams<Operation>,
+  Query extends GetQueryParams<Operation> = GetQueryParams<Operation>,
+  Headers extends GetHeaders<Operation> = GetHeaders<Operation>,
+  Response extends Get2xxReponses<Operation> = Get2xxReponses<Operation>,
 >(
   path: Path,
-  config: UntypedFetchOptions &
-    (Method extends 'get'
-      ? {
-          // method is optional when u can do get
-          method?: Method | Uppercase<Method>;
-        }
-      : {
-          method: Method | Uppercase<Method>;
-        }) &
-    Body &
-    Query,
+  // see: https://stackoverflow.com/a/78720068/11463241
+  ...config: HasRequiredProperties<
+    Headers & Query & PathParams & Body & MethodProp
+  > extends true
+    ? [
+        config: UntypedFetchOptions &
+          MethodProp &
+          Body &
+          PathParams &
+          Query &
+          Headers,
+      ]
+    : [
+        config?: UntypedFetchOptions &
+          MethodProp &
+          Body &
+          PathParams &
+          Query &
+          Headers,
+      ]
 ) => Promise<Response>;
 
 // useFetch;
@@ -158,102 +199,66 @@ export type Fetch = <
 //   ErrorT | DefaultAsyncDataErrorValue
 // >;
 
-export type UseFetch = <
+export type UseFetch<
   Paths extends Record<string, any>,
+  Lazy extends boolean = false,
+> = <
   Path extends keyof Paths & string = keyof Paths & string,
-  Method extends SupportedHttpMethod<
+  Method extends GetSupportedHttpMethod<
     Paths,
     Path
-  > = 'get' extends SupportedHttpMethod<Paths, Path>
+  > = 'get' extends GetSupportedHttpMethod<Paths, Path>
     ? 'get'
-    : SupportedHttpMethod<Paths, Path>,
+    : GetSupportedHttpMethod<Paths, Path>,
+  MethodProp extends GetMethodProp<Method> = GetMethodProp<Method>,
   Operation extends Paths[Path][Method] = Paths[Path][Method],
-  Body extends Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {} = Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {},
-  Query extends Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {} = Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {},
-  Response extends Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown = Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown,
+  Body extends GetBody<Operation> = GetBody<Operation>,
+  PathParams extends GetPathParams<Operation> = GetPathParams<Operation>,
+  Query extends GetQueryParams<Operation> = GetQueryParams<Operation>,
+  Headers extends GetHeaders<Operation> = GetHeaders<Operation>,
+  Response extends Get2xxReponses<Operation> = Get2xxReponses<Operation>,
   ErrorT = FetchError,
   PickKeys extends KeysOf<Response> = KeysOf<Response>,
   DefaultT = DefaultAsyncDataValue,
 >(
   request: Ref<Path> | Path | (() => Path),
-  opts: UntypedUseFetchOptions<Response, Response, PickKeys, DefaultT> &
-    (Method extends 'get'
-      ? {
-          // method is optional when u can do get
-          method?: Method | Uppercase<Method>;
-        }
-      : {
-          method: Method | Uppercase<Method>;
-        }) &
-    Body &
-    Query,
+  ...opts: HasRequiredProperties<
+    Headers & Query & PathParams & Body & MethodProp
+  > extends true
+    ? [
+        opts: UntypedUseLazyFetchOptions<
+          Response,
+          Response,
+          PickKeys,
+          DefaultT
+        > &
+          (Lazy extends false ? { lazy?: boolean } : {}) &
+          ComputedOptions<MethodProp> &
+          ComputedOptions<Body> &
+          InnerComputedOptions<PathParams> &
+          InnerComputedOptions<Query> &
+          InnerComputedOptions<Headers>,
+      ]
+    : [
+        opts?: UntypedUseLazyFetchOptions<
+          Response,
+          Response,
+          PickKeys,
+          DefaultT
+        > &
+          (Lazy extends false ? { lazy?: boolean } : {}) &
+          ComputedOptions<MethodProp> &
+          ComputedOptions<Body> &
+          InnerComputedOptions<PathParams> &
+          InnerComputedOptions<Query> &
+          InnerComputedOptions<Headers>,
+      ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
   ErrorT | DefaultAsyncDataErrorValue
 >;
 
-export type UseLazyFetch = <
-  Paths extends Record<string, any>,
-  Path extends keyof Paths & string = keyof Paths & string,
-  Method extends SupportedHttpMethod<
-    Paths,
-    Path
-  > = 'get' extends SupportedHttpMethod<Paths, Path>
-    ? 'get'
-    : SupportedHttpMethod<Paths, Path>,
-  Operation extends Paths[Path][Method] = Paths[Path][Method],
-  Body extends Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {} = Operation extends { requestBody: unknown }
-    ? { body: Operation['requestBody'] }
-    : {},
-  Query extends Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {} = Operation extends {
-    parameters: { query: Record<string, unknown> };
-  }
-    ? ToQueryOptions<Operation['parameters']['query']>
-    : {},
-  Response extends Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown = Operation extends { responses: Record<number, unknown> }
-    ? Get2xxReponses<Operation['responses']>
-    : unknown,
-  ErrorT = FetchError,
-  PickKeys extends KeysOf<Response> = KeysOf<Response>,
-  DefaultT = DefaultAsyncDataValue,
->(
-  request: Ref<Path> | Path | (() => Path),
-  opts: UntypedUseLazyFetchOptions<Response, Response, PickKeys, DefaultT> &
-    (Method extends 'get'
-      ? {
-          // method is optional when u can do get
-          method?: Method | Uppercase<Method>;
-        }
-      : {
-          method: Method | Uppercase<Method>;
-        }) &
-    Body &
-    Query,
-) => AsyncData<
-  PickFrom<Response, PickKeys> | DefaultT,
-  ErrorT | DefaultAsyncDataErrorValue
+export type UseLazyFetch<Paths extends Record<string, any>> = UseFetch<
+  Paths,
+  true
 >;
