@@ -60,21 +60,18 @@ type GetSupportedHttpMethod<
       : never;
 }[keyof Paths[Path]];
 
-type StartWith2<StatusCode extends number> =
-  `${StatusCode}` extends `2${string}` ? StatusCode : never;
-
 type Get2xxReponses<Operation> = Operation extends { responses: unknown }
   ? {
-      [key in keyof Operation['responses']]: key extends number
-        ? StartWith2<key> extends never
-          ? never
-          : Operation[key] extends {
-                content: {
-                  'application/json': Record<string, any>;
-                };
-              }
-            ? Operation[key]['content']['application/json']
+      [key in keyof Operation['responses']]: key extends string | number
+        ? `${key}` extends `2${string}`
+          ? Operation['responses'][key] extends {
+              content: {
+                'application/json': unknown;
+              };
+            }
+            ? Operation['responses'][key]['content']['application/json']
             : never
+          : never
         : never;
     }[keyof Operation['responses']]
   : unknown;
