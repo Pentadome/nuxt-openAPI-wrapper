@@ -14,7 +14,7 @@ type GenerateArgs = {
 };
 
 // prevent ide errors when using ts-expect-error is string template.
-const tsIgnoreError = '//' + '  @ts-ignore-error';
+const tsIgnoreError = '//' + ' @ts-ignore-error';
 
 const openApiTsFileName = 'openapi-ts';
 
@@ -208,7 +208,7 @@ const discoverOpenApiObjectFilePath = ({
   const triedPaths = [] as string[];
   for (const layer of nuxt.options._layers) {
     const globCwdPath = path.join(layer.cwd, dirname, collectionName);
-    const findResult = globSync(`**/${openApiFileName}`, {
+    const findResult = globSync(openApiFileName, {
       cwd: globCwdPath,
     });
     if (findResult.length === 0) {
@@ -217,7 +217,7 @@ const discoverOpenApiObjectFilePath = ({
     }
     if (findResult.length > 1)
       throw new Error(
-        `Ambiguous open api object match: \n${JSON.stringify(findResult)}`,
+        `Ambiguous open api object match: \n${JSON.stringify(findResult.map((x) => path.join(globCwdPath, x)))}`,
       );
 
     return path.join(globCwdPath, findResult[0]);
