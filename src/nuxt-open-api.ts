@@ -18,12 +18,24 @@ import type {
   OmitStrict,
   ComputedOptions,
   InnerComputedOptions,
+  PlainObject,
 } from './typeUtils';
+export type { FetchOptions } from 'ofetch';
 
-type UntypedFetchOptions = OmitStrict<
+type UntypedOptionsToReplaceWithTypedOptions =
+  | 'body'
+  | 'method'
+  | 'params'
+  | 'query'
+  | 'headers';
+
+export type UntypedFetchOptions = OmitStrict<
   FetchOptions,
-  'body' | 'method' | 'params' | 'query' | 'headers'
+  UntypedOptionsToReplaceWithTypedOptions
 >;
+
+/** @see similair to  {@link https://github.com/nuxt/nuxt/blob/d0a61fc69061690ffda41d9dfe321e400da9da80/packages/nuxt/src/app/composables/fetch.ts#L29} */
+export type ComputedUntypedFetchOptions = ComputedOptions<UntypedFetchOptions>;
 
 // useFetch
 type UntypedUseLazyFetchOptions<
@@ -35,7 +47,7 @@ type UntypedUseLazyFetchOptions<
   M extends AvailableRouterMethod<R> = AvailableRouterMethod<R>,
 > = OmitStrict<
   UseFetchOptions<ResT, DataT, PickKeys, DefaultT, R, M>,
-  'body' | 'method' | 'params' | 'query' | 'headers' | 'lazy'
+  UntypedOptionsToReplaceWithTypedOptions | 'lazy'
 >;
 
 type HTTPMethod =
@@ -101,11 +113,11 @@ type GetQueryParams<Operation> = Operation extends {
 }
   ? HasRequiredProperties<Operation['parameters']['query']> extends true
     ?
-        | { params: Operation['parameters']['query'] }
-        | { query: Operation['parameters']['query'] }
+        | { params: Operation['parameters']['query'] & PlainObject }
+        | { query: Operation['parameters']['query'] & PlainObject }
     :
-        | { params?: Operation['parameters']['query'] }
-        | { query?: Operation['parameters']['query'] }
+        | { params?: Operation['parameters']['query'] & PlainObject }
+        | { query?: Operation['parameters']['query'] & PlainObject }
   : {};
 
 type GetHeaders<Operation> = Operation extends {
@@ -114,8 +126,8 @@ type GetHeaders<Operation> = Operation extends {
   };
 }
   ? HasRequiredProperties<Operation['parameters']['header']> extends true
-    ? { headers: Operation['parameters']['header'] }
-    : { headers?: Operation['parameters']['header'] }
+    ? { headers: Operation['parameters']['header'] & PlainObject }
+    : { headers?: Operation['parameters']['header'] & PlainObject }
   : {};
 
 type GetMethodProp<Method extends string> = Method extends 'get'

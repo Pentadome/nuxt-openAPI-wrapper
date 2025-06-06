@@ -20,7 +20,9 @@ const openApiTsFileName = 'openapi-ts';
 
 export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
   const apis = Object.entries(moduleConfig.apis);
+  const resolver = createResolver(import.meta.url);
 
+  const addedFiles = new Set<string>();
   for (const [collectionName, apiConfig] of apis) {
     const openApiTsFilePath = `${moduleFolderName}/${collectionName}/${openApiTsFileName}.ts`;
 
@@ -41,13 +43,12 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
 
     const pascalCasedName = pascalCase(collectionName);
     const pathsTypeName = `${pascalCasedName}Paths`;
+    const componentsTypeName = `${pascalCasedName}Components`;
 
-    const clientPath = `${moduleFolderName}/${collectionName}/client.ts`;
+    const clientPath = `${moduleFolderName}/${collectionName}/index.ts`;
     const clientName = `$fetch${pascalCasedName}`;
     const useClientName = `use${pascalCasedName}Fetch`;
     const useLazyClientName = `useLazy${pascalCasedName}Fetch`;
-
-    const resolver = createResolver(import.meta.url);
 
     const { dst } = addTemplate({
       filename: clientPath,
@@ -58,7 +59,7 @@ import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedU
 import { useFetch, useLazyFetch } from 'nuxt/app';
 import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
 
-export type { paths as ${pathsTypeName} } from './${openApiTsFileName}'
+export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
 
 ${tsIgnoreError} 
 export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
@@ -106,7 +107,7 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
       },
     });
 
-    console.log(dst);
+    addedFiles.add(dst);
 
     if (apiConfig.autoImport ?? moduleConfig.autoImport)
       addImports([
@@ -129,13 +130,34 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
         },
       ]);
   }
+
+  addTemplate({
+    filename: `${moduleFolderName}/index.ts`,
+    getContents: () => {
+      const result = addedFiles
+        .values()
+        .map((x) => {
+          // get rid of '.ts' extension
+          const exportFrom = path.join(path.dirname(x), path.parse(x).name);
+          return `export * from "${resolver.resolve(exportFrom)}";`;
+        })
+        .toArray();
+
+      result.unshift(
+        `export type * from "${resolver.resolve('./nuxt-open-api')}";`,
+      );
+
+      return result.join('\n');
+    },
+    write: true,
+  });
 };
 
 type GetOpenApiTsConfigArgs = {
   moduleConfig: ResolvedConfig;
   nuxt: Nuxt;
   collectionName: string;
-  apiConfig: ApiConfig<boolean>;
+  apiConfig: ApiConfig<false> | ApiConfig<true>;
   //redoc: RedocConfig | undefined;
 };
 

@@ -3,16 +3,20 @@
 </template>
 
 <script setup lang="ts">
-const result = await $fetchGithub('/advisories/{ghsa_id}', {
+import { $fetchGithub, useGithubFetch } from '#build/nuxt-open-api';
+
+const _result = await $fetchGithub('/advisories/{ghsa_id}', {
   pathParams: {
     ghsa_id: '2',
   },
 });
 
-const result2 = await useGithubFetch('/advisories/{ghsa_id}', {
+const _result2 = await useGithubFetch('/advisories/{ghsa_id}', {
   pathParams: { ghsa_id: 'test' },
   method: 'GET',
 });
 
-useFetch;
+const _result3 = useCustomGithubFetch('/advisories/{ghsa_id}', {
+  pathParams: { ghsa_id: 'test' },
+});
 </script>

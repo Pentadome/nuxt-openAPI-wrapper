@@ -10,23 +10,30 @@ export type AutoDiscoverConfig = {
 };
 
 // Module options TypeScript interface definition
-export interface ModuleOptions<
-  AutoDiscover extends false | AutoDiscoverConfig = AutoDiscoverConfig,
-  RequireOpenApiObject extends AutoDiscover extends false
-    ? true
-    : false = AutoDiscover extends false ? true : false,
-> extends GlobalOrSpecificOptions {
-  autoDiscover?: AutoDiscover;
-  apis: {
-    [key: string]: ApiConfig<RequireOpenApiObject>;
-  };
+export type ModuleOptions = GlobalOrSpecificOptions & {
   /** @default true */
   autoImport?: boolean;
-}
+} & (
+    | {
+        autoDiscover?: AutoDiscoverConfig;
+        apis: {
+          [key: string]: ApiConfig<false>;
+        };
+      }
+    | {
+        autoDiscover: false;
+        apis: {
+          [key: string]: ApiConfig<true>;
+        };
+      }
+  );
 
 export type GlobalOrSpecificOptions = {
   /** @default { generatePathParams: true } */
-  openApiTsConfig?: OmitStrict<OpenAPITSOptions, 'pathParamsAsTypes'>;
+  openApiTsConfig?: OmitStrict<
+    OpenAPITSOptions,
+    'pathParamsAsTypes' | 'generatePathParams'
+  >;
 };
 
 export type ApiConfig<RequireOpenApiObject extends boolean = false> =
@@ -36,7 +43,7 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
      * undefined = use global option
      * @default undefined */
     autoImport?: boolean;
-  } & (RequireOpenApiObject extends true
+  } & (true extends RequireOpenApiObject
       ? {
           openApi: OpenAPI3 | string;
         }
@@ -52,11 +59,11 @@ export const defaultConfig = {
   apis: {},
   openApiTsConfig: { generatePathParams: true },
   autoImport: true,
-} as const satisfies ModuleOptions<AutoDiscoverConfig, false>;
+} as const satisfies ModuleOptions & {
+  openApiTsConfig: { generatePathParams: boolean };
+};
 
-export const applyConfig = (
-  config: ModuleOptions<false | AutoDiscoverConfig>,
-) => {
+export const applyConfig = (config: ModuleOptions) => {
   return defu(config, defaultConfig);
 };
 
