@@ -56,7 +56,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
       getContents: () => {
         return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
 import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./nuxt-open-api')}';
-import { useFetch, useLazyFetch } from 'nuxt/app';
+import { useFetch } from 'nuxt/app';
 import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
 
 export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
@@ -174,7 +174,7 @@ const getOpenApiTs = async ({
   if (apiConfig.openApi) {
     return await openapiTS(
       apiConfig.openApi,
-      moduleConfig.openApiTsConfig ?? apiConfig.openApiTsConfig,
+      apiConfig.openApiTsConfig ?? moduleConfig.openApiTsConfig,
     );
   }
 
@@ -184,11 +184,9 @@ const getOpenApiTs = async ({
     collectionName,
   });
 
-  console.log(optionsFilePath);
-
   return await openapiTS(
     new URL(optionsFilePath),
-    moduleConfig.openApiTsConfig ?? apiConfig.openApiTsConfig,
+    apiConfig.openApiTsConfig ?? moduleConfig.openApiTsConfig,
   );
 };
 

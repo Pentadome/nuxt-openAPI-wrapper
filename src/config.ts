@@ -1,6 +1,6 @@
 import defu from 'defu';
-import type { OpenAPITSOptions, OpenAPI3 } from 'openapi-typescript';
-import type { OmitStrict } from './typeUtils';
+import type { OpenAPITSOptions } from 'openapi-typescript';
+import type openapiTS from 'openapi-typescript';
 
 export type AutoDiscoverConfig = {
   /** @default 'openapi' */
@@ -29,12 +29,14 @@ export type ModuleOptions = GlobalOrSpecificOptions & {
   );
 
 export type GlobalOrSpecificOptions = {
-  /** @default { generatePathParams: true } */
-  openApiTsConfig?: OmitStrict<
-    OpenAPITSOptions,
-    'pathParamsAsTypes' | 'generatePathParams'
-  >;
+  /** @default { generatePathParams: true, pathParamsAsTypes: false, alphabetize: true, } */
+  openApiTsConfig?: OpenAPITSOptions & {
+    generatePathParams?: true;
+    pathParamsAsTypes?: false;
+  };
 };
+
+type OpenApiDocument = Parameters<typeof openapiTS>[0];
 
 export type ApiConfig<RequireOpenApiObject extends boolean = false> =
   GlobalOrSpecificOptions & {
@@ -45,10 +47,10 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
     autoImport?: boolean;
   } & (true extends RequireOpenApiObject
       ? {
-          openApi: OpenAPI3 | string;
+          openApi: OpenApiDocument;
         }
       : {
-          openApi?: OpenAPI3 | string;
+          openApi?: OpenApiDocument;
         });
 
 export const defaultConfig = {
@@ -57,11 +59,13 @@ export const defaultConfig = {
     openApiFileName: 'openapi.{json,yaml}',
   },
   apis: {},
-  openApiTsConfig: { generatePathParams: true },
+  openApiTsConfig: {
+    generatePathParams: true,
+    pathParamsAsTypes: false,
+    alphabetize: true,
+  },
   autoImport: true,
-} as const satisfies ModuleOptions & {
-  openApiTsConfig: { generatePathParams: boolean };
-};
+} as const satisfies ModuleOptions;
 
 export const applyConfig = (config: ModuleOptions) => {
   return defu(config, defaultConfig);
