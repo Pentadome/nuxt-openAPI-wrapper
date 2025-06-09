@@ -1,8 +1,8 @@
 {
   "name": "my-module",
   "version": "1.0.1",
-  "description": "My new Nuxt module",
-  "repository": "your-org/my-module",
+  "description": "An openapi client wrapper for Nuxt fetch client.",
+  "repository": "Pentadome/nuxt-open-api",
   "license": "MIT",
   "type": "module",
   "exports": {
