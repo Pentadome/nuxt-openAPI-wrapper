@@ -30,7 +30,10 @@ const _test2: GithubComponents['schemas']['global-advisory'] | null =
 
 const _result3 = useCustomGithubFetch('/advisories/{ghsa_id}', {
   pathParams: { ghsa_id: 'test' },
+  lazy: true,
 });
+
+useLazyCustomGithubFetch('/', { lazy: true /* todo: why no type error? */ });
 
 // check for type error
 const _test3: GithubComponents['schemas']['global-advisory'] | null =

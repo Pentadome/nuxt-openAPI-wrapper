@@ -17,7 +17,6 @@ import type {
   HasRequiredProperties,
   OmitStrict,
   ComputedOptions,
-  InnerComputedOptions,
   PlainObject,
 } from './typeUtils';
 export type { FetchOptions } from 'ofetch';
@@ -118,7 +117,7 @@ type GetQueryParams<Operation> = Operation extends {
     :
         | { params?: Operation['parameters']['query'] & PlainObject }
         | { query?: Operation['parameters']['query'] & PlainObject }
-  : {};
+  : { params?: PlainObject } | { query?: PlainObject };
 
 type GetHeaders<Operation> = Operation extends {
   parameters: {
@@ -128,7 +127,7 @@ type GetHeaders<Operation> = Operation extends {
   ? HasRequiredProperties<Operation['parameters']['header']> extends true
     ? { headers: Operation['parameters']['header'] & PlainObject }
     : { headers?: Operation['parameters']['header'] & PlainObject }
-  : {};
+  : { headers?: PlainObject };
 
 type GetMethodProp<Method extends string> = Method extends 'get'
   ? {
@@ -244,9 +243,9 @@ export type UseFetch<
           (Lazy extends false ? { lazy?: boolean } : {}) &
           ComputedOptions<MethodProp> &
           ComputedOptions<Body> &
-          InnerComputedOptions<PathParams> &
-          InnerComputedOptions<Query> &
-          InnerComputedOptions<Headers>,
+          ComputedOptions<PathParams> &
+          ComputedOptions<Query> &
+          ComputedOptions<Headers>,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -258,9 +257,9 @@ export type UseFetch<
           (Lazy extends false ? { lazy?: boolean } : {}) &
           ComputedOptions<MethodProp> &
           ComputedOptions<Body> &
-          InnerComputedOptions<PathParams> &
-          InnerComputedOptions<Query> &
-          InnerComputedOptions<Headers>,
+          ComputedOptions<PathParams> &
+          ComputedOptions<Query> &
+          ComputedOptions<Headers>,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,

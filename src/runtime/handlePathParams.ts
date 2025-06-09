@@ -1,4 +1,11 @@
-import { computed, reactive, toValue, type Ref } from 'vue';
+import {
+  computed,
+  reactive,
+  toValue,
+  unref,
+  type MaybeRef,
+  type Ref,
+} from 'vue';
 import type { ComputedOptions } from '../typeUtils';
 
 type PathParams = Record<string, string | number>;
@@ -9,12 +16,12 @@ export const handleFetchPathParams = (path: string, pathParams: PathParams) => {
 
 export const handleUseFetchPathParams = (
   path: string | Ref<string> | (() => string),
-  pathParams: ComputedOptions<PathParams>,
+  pathParams: MaybeRef<ComputedOptions<PathParams>>,
 ) => {
-  const reactivePathParams = reactive(pathParams) as PathParams;
-  return computed(() =>
-    handleFetchPathParams(toValue(path), reactivePathParams),
-  );
+  return computed(() => {
+    const reactivePathParams = reactive(unref(pathParams)) as PathParams;
+    return handleFetchPathParams(toValue(path), reactivePathParams);
+  });
 };
 
 const handlePathString = (pathString: string, pathParams: PathParams) => {

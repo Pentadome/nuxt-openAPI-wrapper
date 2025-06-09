@@ -6,12 +6,13 @@ import assert from 'node:assert';
 import openapiTS, { astToString } from 'openapi-typescript';
 import { addImports, addTemplate, createResolver } from '@nuxt/kit';
 import { pascalCase } from 'es-toolkit';
-import { moduleFolderName } from './constants';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
   nuxt: Nuxt;
 };
+
+const moduleFolderName = 'nuxt-open-api';
 
 // prevent ide errors when using ts-expect-error is string template.
 const tsIgnoreError = '//' + ' @ts-ignore-error';
