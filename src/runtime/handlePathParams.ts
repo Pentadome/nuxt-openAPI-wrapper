@@ -6,7 +6,7 @@ import {
   type MaybeRef,
   type Ref,
 } from 'vue';
-import type { ComputedOptions } from '../typeUtils';
+import type { ComputedOptions } from './typeUtils';
 
 type PathParams = Record<string, string | number>;
 

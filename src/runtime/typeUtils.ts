@@ -15,8 +15,4 @@ export type ComputedOptions<T extends Record<string, any>> = {
     : ComputedOptions<T[K]> | Ref<T[K]> | T[K];
 };
 
-export type InnerComputedOptions<T extends Record<string, any>> = {
-  [K in keyof T]: ComputedOptions<T[K]>;
-};
-
 export type PlainObject = { [key: string]: any };

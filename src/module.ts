@@ -2,7 +2,18 @@ import { defineNuxtModule } from '@nuxt/kit';
 import { applyConfig, type ModuleOptions } from './config';
 import { generate } from './generate';
 
+// public facing types need to be exported from this file
 export type { ModuleOptions } from './config';
+export type {
+  ComputedUntypedFetchOptions,
+  Fetch,
+  FetchOptions,
+  SimplifiedFetchOptions,
+  SimplifiedUseFetchOptions,
+  UntypedFetchOptions,
+  UseFetch,
+  UseLazyFetch,
+} from './fetchTypes';
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {

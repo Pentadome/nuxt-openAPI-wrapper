@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import type { FetchOptions, FetchError } from 'ofetch';
-import type { UseFetchOptions, AsyncData } from '#app';
+import type { UseFetchOptions, AsyncData } from '../node_modules/nuxt/dist/app';
 import type {
   DefaultAsyncDataErrorValue,
   DefaultAsyncDataValue,
@@ -18,7 +18,7 @@ import type {
   OmitStrict,
   ComputedOptions,
   PlainObject,
-} from './typeUtils';
+} from './runtime/typeUtils';
 export type { FetchOptions } from 'ofetch';
 
 type UntypedOptionsToReplaceWithTypedOptions =
@@ -114,10 +114,11 @@ type GetQueryParams<Operation> = Operation extends {
     ?
         | { params: Operation['parameters']['query'] & PlainObject }
         | { query: Operation['parameters']['query'] & PlainObject }
-    :
-        | { params?: Operation['parameters']['query'] & PlainObject }
-        | { query?: Operation['parameters']['query'] & PlainObject }
-  : { params?: PlainObject } | { query?: PlainObject };
+    : {
+        params?: Operation['parameters']['query'] & PlainObject;
+        query?: Operation['parameters']['query'] & PlainObject;
+      }
+  : { params?: PlainObject; query?: PlainObject };
 
 type GetHeaders<Operation> = Operation extends {
   parameters: {
