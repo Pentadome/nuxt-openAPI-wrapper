@@ -56,7 +56,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
       write: true,
       getContents: () => {
         return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
-import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./module')}';
+import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
 import { useFetch } from 'nuxt/app';
 import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
 
@@ -144,9 +144,9 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
         })
         .toArray();
 
-      // result.unshift(
-      //   `export type * from "${resolver.resolve('./module')}";`,
-      // );
+      result.unshift(
+        `export type * from "${resolver.resolve('./runtime/fetchTypes')}";`,
+      );
 
       return result.join('\n');
     },

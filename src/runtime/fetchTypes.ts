@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 
 import type { FetchOptions, FetchError } from 'ofetch';
-import type { UseFetchOptions, AsyncData } from '../node_modules/nuxt/dist/app';
+import type { UseFetchOptions, AsyncData } from 'nuxt/app';
 import type {
   DefaultAsyncDataErrorValue,
   DefaultAsyncDataValue,
@@ -11,14 +11,14 @@ import type { NitroFetchRequest, AvailableRouterMethod } from 'nitropack/types';
 import type {
   PickFrom,
   KeysOf,
-} from '../node_modules/nuxt/dist/app/composables/asyncData';
+} from '../../node_modules/nuxt/dist/app/composables/asyncData';
 import type { Ref } from 'vue';
 import type {
   HasRequiredProperties,
   OmitStrict,
   ComputedOptions,
   PlainObject,
-} from './runtime/typeUtils';
+} from './typeUtils';
 export type { FetchOptions } from 'ofetch';
 
 type UntypedOptionsToReplaceWithTypedOptions =
