@@ -1,5 +1,5 @@
 {
-  "name": "my-module",
+  "name": "nuxt-open-api",
   "version": "1.0.4",
   "description": "An openapi client wrapper for Nuxt fetch client.",
   "repository": "Pentadome/nuxt-open-api",
