@@ -1,6 +1,10 @@
 # Changelog
 
 
+## v1.0.6
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.5...v1.0.6)
+
 ## v1.0.5
 
 [compare changes](https://github.com/Pentadome/nuxt-open-api/compare/v1.0.4...v1.0.5)
