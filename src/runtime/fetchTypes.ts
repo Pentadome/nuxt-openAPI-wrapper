@@ -50,34 +50,31 @@ type UntypedUseLazyFetchOptions<
 >;
 
 type HTTPMethod =
-  | 'GET'
-  | 'HEAD'
-  | 'PATCH'
-  | 'POST'
-  | 'PUT'
-  | 'DELETE'
-  | 'CONNECT'
-  | 'OPTIONS'
-  | 'TRACE';
+  | 'get'
+  | 'head'
+  | 'patch'
+  | 'post'
+  | 'put'
+  | 'delete'
+  | 'connect'
+  | 'options'
+  | 'trace';
 
-type GetSupportedHttpMethod<
-  Paths extends Record<string, any>,
-  Path extends keyof Paths,
-> = {
-  [key in keyof Paths[Path]]: Paths[Path][key] extends never
-    ? never
-    : key extends Lowercase<HTTPMethod>
+type GetSupportedHttpMethod<PathInfo extends PlainObject> = {
+  [key in keyof PathInfo]: PathInfo[key] extends {}
+    ? key extends HTTPMethod
       ? key
-      : never;
-}[keyof Paths[Path]];
+      : never
+    : never;
+}[keyof PathInfo];
 
-type Get2xxReponses<Operation> = Operation extends { responses: unknown }
+type Get2xxReponses<Operation> = Operation extends { responses: {} }
   ? {
       [key in keyof Operation['responses']]: key extends string | number
         ? `${key}` extends `2${string}`
           ? Operation['responses'][key] extends {
               content: {
-                'application/json': unknown;
+                'application/json': {};
               };
             }
             ? Operation['responses'][key]['content']['application/json']
@@ -90,7 +87,7 @@ type Get2xxReponses<Operation> = Operation extends { responses: unknown }
 type GetBody<Operation> = Operation extends {
   requestBody: {
     content: {
-      'application/json': unknown;
+      'application/json': {};
     };
   };
 }
@@ -99,7 +96,7 @@ type GetBody<Operation> = Operation extends {
 
 type GetPathParams<Operation> = Operation extends {
   parameters: {
-    path: unknown;
+    path: {};
   };
 }
   ? { pathParams: Operation['parameters']['path'] }
@@ -107,7 +104,7 @@ type GetPathParams<Operation> = Operation extends {
 
 type GetQueryParams<Operation> = Operation extends {
   parameters: {
-    query: unknown;
+    query: {};
   };
 }
   ? HasRequiredProperties<Operation['parameters']['query']> extends true
@@ -122,7 +119,7 @@ type GetQueryParams<Operation> = Operation extends {
 
 type GetHeaders<Operation> = Operation extends {
   parameters: {
-    header: unknown;
+    header: {};
   };
 }
   ? HasRequiredProperties<Operation['parameters']['header']> extends true
@@ -130,13 +127,17 @@ type GetHeaders<Operation> = Operation extends {
     : { headers?: Operation['parameters']['header'] & PlainObject }
   : { headers?: PlainObject };
 
-type GetMethodProp<Method extends string> = Method extends 'get'
+type GetMethodProp<Methods, Method> = 'get' extends Methods
   ? {
       // method is optional when u can do get
-      method?: Method | Uppercase<Method>;
+      method?: Method | Method extends string
+        ? Uppercase<Method> | Method
+        : Method;
     }
   : {
-      method: Method | Uppercase<Method>;
+      method: Method | Method extends string
+        ? Uppercase<Method> | Method
+        : Method;
     };
 
 export type SimplifiedFetchOptions = FetchOptions & {
