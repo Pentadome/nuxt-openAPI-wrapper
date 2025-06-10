@@ -2,9 +2,8 @@ import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
   modules: ['../src/module'],
-  nuxtOpenApi: {
+  openAPIWrapper: {
     autoImport: true,
-    openApiTsConfig: {},
     apis: {
       github: {
         baseUrl: 'https://api.github.com',

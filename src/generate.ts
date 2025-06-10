@@ -12,7 +12,7 @@ type GenerateArgs = {
   nuxt: Nuxt;
 };
 
-const moduleFolderName = 'nuxt-open-api';
+const moduleFolderName = 'openapi-wrapper';
 
 // prevent ide errors when using ts-expect-error is string template.
 const tsIgnoreError = '//' + ' @ts-ignore-error';

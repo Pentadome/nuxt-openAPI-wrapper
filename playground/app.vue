@@ -8,7 +8,7 @@ import {
   useGithubFetch,
   type GithubComponents,
   type GitlabComponents,
-} from '#build/nuxt-open-api';
+} from '#build/openapi-wrapper';
 
 const _result = await $fetchGithub('/advisories/{ghsa_id}', {
   pathParams: {

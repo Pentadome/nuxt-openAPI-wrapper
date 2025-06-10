@@ -3,7 +3,7 @@ import {
   useGithubFetch,
   useLazyGithubFetch,
   type ComputedUntypedFetchOptions,
-} from '#build/nuxt-open-api';
+} from '#build/openapi-wrapper';
 import type { FetchHook } from 'ofetch';
 
 // @ts-expect-error -- limitation in typescript

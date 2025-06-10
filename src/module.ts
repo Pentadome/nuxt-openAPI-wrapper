@@ -7,8 +7,8 @@ export type { ModuleOptions } from './config';
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'nuxt-open-api',
-    configKey: 'nuxtOpenApi',
+    name: 'nuxt-openAPI-wrapper',
+    configKey: 'openAPIWrapper',
   },
   // Default configuration options of the Nuxt module
   defaults: {},

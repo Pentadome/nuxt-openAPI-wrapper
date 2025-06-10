@@ -2,41 +2,112 @@
 Get your module up and running quickly.
 
 Find and replace all on all files (CMD+SHIFT+F):
-- Name: My Module
-- Package name: my-module
+- Name: Nuxt OpenAPI wrapper
+- Package name: nuxt-openAPI-wrapper
 - Description: My new Nuxt module
 -->
 
-# My Module
+# Nuxt typesafe OpenAPI wrapper
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-My new Nuxt module for doing amazing things.
+Generates a typesafe fetch client for Nuxt using OpenAPI.
 
-- [✨ &nbsp;Release Notes](/CHANGELOG.md)
-<!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/my-module?file=playground%2Fapp.vue) -->
-<!-- - [📖 &nbsp;Documentation](https://example.com) -->
+<!-- - [✨ &nbsp;Release Notes](/CHANGELOG.md) -->
+  <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/nuxt-openAPI-wrapper?file=playground%2Fapp.vue) -->
+  <!-- - [📖 &nbsp;Documentation](https://example.com) -->
 
-## Features
+## Usage
 
-<!-- Highlight some of the features your module provide here -->
-- ⛰ &nbsp;Foo
-- 🚠 &nbsp;Bar
-- 🌲 &nbsp;Baz
-
-## Quick Setup
-
-Install the module to your Nuxt application with one command:
+Install the module:
 
 ```bash
-npx nuxi module add my-module
+npx nuxi module add nuxt-openAPI-wrapper
 ```
 
-That's it! You can now use My Module in your Nuxt app ✨
+Configure the api clients:
 
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-openAPI-wrapper'],
+  openAPIWrapper: {
+    autoImport: true,
+    // config options for openAPI-ts
+    openApiTsConfig: {},
+    apis: {
+      github: {
+        baseUrl: 'https://api.github.com',
+        // no explicit openAPI document. Will look for an openapi.{json,yaml} in the ./openapi/github directory
+      },
+      gitlab: {
+        baseUrl: 'https://gitlab.com',
+        // explicit openAPI document.
+        openApi:
+          'https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/openapi/openapi.yaml?inline=false',
+      },
+    },
+  },
+});
+```
+
+That's it! You can now use Nuxt OpenAPI wrapper in your Nuxt app ✨
+
+```ts
+const x = await $fetchGithub('/advisories/{ghsa_id}' /* auto completion! */, {
+  pathParams: {
+    // support for path parameters!
+    ghsa_id: '2', // typesafety!
+  },
+});
+
+console.log(x.description); // typesafe response type!
+```
+
+## Customizing the client
+
+Often you want to customize the client, e.g. so it always adds an authentication header to requests.
+
+Disable auto import for the base client
+
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-openAPI-wrapper'],
+  openAPIWrapper: {
+    apis: {
+      github: {
+        baseUrl: 'https://api.github.com',
+        autoImport: false
+        ...
+```
+
+Add a new ts file to your composables folder, e.g. `./composables/githubClient.ts`
+
+```ts
+// import the base client explicitly
+import {
+  $fetchGithub as _$fetchGithub,
+  useGithubFetch as _useGithubFetch,
+  useLazyGithubFetch as _useLazyGithubFetch,
+} from '#build/openapi-wrapper';
+
+// you might need to add // @ts-ignore error
+export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
+  // customize the request
+  opts ??= {};
+
+  opts.onRequest = (ctx) =>
+    ctx.options.headers.append('Authorization', 'Bearer 1234');
+
+  opts.onResponse = (ctx) => console.log('response!');
+
+  return _fetchGithub(path, opts);
+};
+
+// Do the same for useGithubFetch and useLazyGithubFetch
+```
 
 ## Contribution
 
@@ -69,16 +140,13 @@ That's it! You can now use My Module in your Nuxt app ✨
 
 </details>
 
-
 <!-- Badges -->
-[npm-version-src]: https://img.shields.io/npm/v/my-module/latest.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-version-href]: https://npmjs.com/package/my-module
 
-[npm-downloads-src]: https://img.shields.io/npm/dm/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[npm-downloads-href]: https://npm.chart.dev/my-module
-
-[license-src]: https://img.shields.io/npm/l/my-module.svg?style=flat&colorA=020420&colorB=00DC82
-[license-href]: https://npmjs.com/package/my-module
-
+[npm-version-src]: https://img.shields.io/npm/v/nuxt-openAPI-wrapper/latest.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-version-href]: https://npmjs.com/package/nuxt-openAPI-wrapper
+[npm-downloads-src]: https://img.shields.io/npm/dm/nuxt-openAPI-wrapper.svg?style=flat&colorA=020420&colorB=00DC82
+[npm-downloads-href]: https://npm.chart.dev/nuxt-openAPI-wrapper
+[license-src]: https://img.shields.io/npm/l/nuxt-openAPI-wrapper.svg?style=flat&colorA=020420&colorB=00DC82
+[license-href]: https://npmjs.com/package/nuxt-openAPI-wrapper
 [nuxt-src]: https://img.shields.io/badge/Nuxt-020420?logo=nuxt.js
 [nuxt-href]: https://nuxt.com
