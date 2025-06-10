@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.7
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.6...v1.0.7)
+
+### 🩹 Fixes
+
+- Broken links in readme.md ([730eb0a](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/730eb0a))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.6
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.5...v1.0.6)
