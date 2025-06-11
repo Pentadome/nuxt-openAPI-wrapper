@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v1.0.8
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.7...v1.0.8)
+
+### 🩹 Fixes
+
+- Return type for non-get api not working ([4ae16ee](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/4ae16ee))
+
+### 🏡 Chore
+
+- **release:** V1.0.7 ([e9bb5ae](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/e9bb5ae))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.7
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.6...v1.0.7)
