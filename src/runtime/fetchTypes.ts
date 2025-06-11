@@ -11,14 +11,12 @@ import type { NitroFetchRequest, AvailableRouterMethod } from 'nitropack/types';
 import type {
   PickFrom,
   KeysOf,
-} from '../../node_modules/nuxt/dist/app/composables/asyncData';
-import type { Ref } from 'vue';
-import type {
   HasRequiredProperties,
   OmitStrict,
   ComputedOptions,
   PlainObject,
 } from './typeUtils';
+import type { Ref } from 'vue';
 export type { FetchOptions } from 'ofetch';
 export type { ComputedOptions } from './typeUtils';
 
