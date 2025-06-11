@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.11
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.10...v1.0.11)
+
+### 🩹 Fixes
+
+- Return type any sometimes well using 'use...Fetch' functions. feat: expose ensureArray and ensureArrayComputed util functions ([cfdd120](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/cfdd120))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.10
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.9...v1.0.10)
