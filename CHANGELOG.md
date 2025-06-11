@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.0.12
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.11...v1.0.12)
+
+### 🩹 Fixes
+
+- Undo unnecessary change ([8c9a2eb](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/8c9a2eb))
+- Type error caused by missing nuxt type ([03ce764](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/03ce764))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.11
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.10...v1.0.11)
