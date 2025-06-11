@@ -67,8 +67,7 @@ export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } f
 
 ${tsIgnoreError} 
 export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
-  ${tsIgnoreError} 
-  const options: SimplifiedFetchOptions = (opts as unknown as SimplifiedFetchOptions) ?? {}
+  const options = (opts ?? {}) as SimplifiedFetchOptions
   options.baseURL ??= "${apiConfig.baseUrl}"
 
   let finalPath = path as string
@@ -84,8 +83,7 @@ export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
 
 ${tsIgnoreError} 
 export const ${useClientName}: UseFetch<${pathsTypeName}> =  (path, opts?) => {
-  ${tsIgnoreError} 
-  const options: SimplifiedUseFetchOptions = (opts as unknown as SimplifiedUseFetchOptions) ?? {}
+  const options = (opts ?? {}) as SimplifiedUseFetchOptions;
   options.baseURL ??= "${apiConfig.baseUrl}"
 
   let finalPath = path as string | Ref<string> | (() => string)
@@ -101,8 +99,7 @@ export const ${useClientName}: UseFetch<${pathsTypeName}> =  (path, opts?) => {
 
 ${tsIgnoreError}
 export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?) => {
-  ${tsIgnoreError} 
-  const options: SimplifiedUseFetchOptions = opts ? {...(opts as unknown as SimplifiedUseFetchOptions), lazy: true } : { lazy: true }
+  const options = (opts ?? {}) as SimplifiedUseFetchOptions;
 
   ${tsIgnoreError}
   return ${useClientName}(path, options);
@@ -148,7 +145,7 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
         .toArray();
 
       result.unshift(
-        `export type * from "${resolver.resolve('./runtime/fetchTypes')}";`,
+        `export type * from "${resolver.resolve('./runtime/fetchTypes')}";\nexport * from "${resolver.resolve('./runtime/fetchUtils')}"`,
       );
 
       return result.join('\n');
@@ -168,7 +165,6 @@ type GetOpenApiTsConfigArgs = {
 const staticOpenApiTsConfig = {
   generatePathParams: true,
   pathParamsAsTypes: false,
-  
 } as const satisfies OpenAPITSOptions;
 
 const getOpenApiTs = async ({

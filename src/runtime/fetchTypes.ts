@@ -12,7 +12,7 @@ import type {
   PickFrom,
   KeysOf,
 } from '../../node_modules/nuxt/dist/app/composables/asyncData';
-import type { Ref } from 'vue';
+import type { MaybeRef, Ref } from 'vue';
 import type {
   HasRequiredProperties,
   OmitStrict,
@@ -20,6 +20,7 @@ import type {
   PlainObject,
 } from './typeUtils';
 export type { FetchOptions } from 'ofetch';
+export type { ComputedOptions } from './typeUtils';
 
 type UntypedOptionsToReplaceWithTypedOptions =
   | 'body'
@@ -135,14 +136,23 @@ type GetHeaders<Operation> = Operation extends {
 type GetMethodProp<Methods, Method> = 'get' extends Methods
   ? {
       // method is optional when u can do get
-      method?: Method | Method extends string
-        ? Uppercase<Method> | Method
-        : Method;
+      method?: Method extends string ? Uppercase<Method> | Method : Method;
     }
   : {
-      method: Method | Method extends string
-        ? Uppercase<Method> | Method
-        : Method;
+      method: Method extends string ? Uppercase<Method> | Method : Method;
+    };
+
+type GetComputedMethodProp<Methods, Method> = 'get' extends Methods
+  ? {
+      // method is optional when u can do get
+      method?: Method extends string
+        ? MaybeRef<Uppercase<Method> | Method>
+        : MaybeRef<Method>;
+    }
+  : {
+      method: Method extends string
+        ? MaybeRef<Uppercase<Method> | Method>
+        : MaybeRef<Method>;
     };
 
 export type SimplifiedFetchOptions = FetchOptions & {
@@ -230,7 +240,11 @@ export type UseFetch<
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
-    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
+    Headers &
+      Query &
+      PathParams &
+      Body &
+      GetComputedMethodProp<MethodOptions, Method>
   > extends true
     ? [
         opts: UntypedUseLazyFetchOptions<
@@ -240,13 +254,8 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, Method>
-          >,
+          GetComputedMethodProp<MethodOptions, Method> &
+          ComputedOptions<Headers & Query & PathParams & Body>,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -256,13 +265,8 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, Method>
-          >,
+          GetComputedMethodProp<MethodOptions, Method> &
+          ComputedOptions<Headers & Query & PathParams & Body>,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
