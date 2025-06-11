@@ -60,13 +60,18 @@ type HTTPMethod =
   | 'options'
   | 'trace';
 
-type GetSupportedHttpMethod<PathInfo extends PlainObject> = {
+type GetSupportedHttpMethods<PathInfo extends PlainObject> = {
   [key in keyof PathInfo]: PathInfo[key] extends {}
     ? key extends HTTPMethod
       ? key
       : never
     : never;
 }[keyof PathInfo];
+
+type GetMethodOptions<PathInfo extends PlainObject> =
+  'get' extends GetSupportedHttpMethods<PathInfo>
+    ? GetSupportedHttpMethods<PathInfo> | undefined
+    : GetSupportedHttpMethods<PathInfo>;
 
 type Get2xxReponses<Operation> = Operation extends { responses: {} }
   ? {
@@ -149,29 +154,25 @@ export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
 };
 
 export type Fetch<Paths extends Record<string, any>> = <
-  Path extends keyof Paths = keyof Paths,
-  Method extends GetSupportedHttpMethod<
-    Paths,
-    Path
-  > = 'get' extends GetSupportedHttpMethod<Paths, Path>
-    ? 'get'
-    : GetSupportedHttpMethod<Paths, Path>,
-  MethodProp extends GetMethodProp<Method> = GetMethodProp<Method>,
-  Operation extends Paths[Path][Method] = Paths[Path][Method],
-  Body extends GetBody<Operation> = GetBody<Operation>,
-  PathParams extends GetPathParams<Operation> = GetPathParams<Operation>,
-  Query extends GetQueryParams<Operation> = GetQueryParams<Operation>,
-  Headers extends GetHeaders<Operation> = GetHeaders<Operation>,
-  Response extends Get2xxReponses<Operation> = Get2xxReponses<Operation>,
+  Path extends keyof Paths,
+  PathInfo extends Paths[Path],
+  MethodOptions extends GetMethodOptions<PathInfo>,
+  Method extends Extract<MethodOptions, string>,
+  Operation extends Paths[Path][Method],
+  Body extends GetBody<Operation>,
+  PathParams extends GetPathParams<Operation>,
+  Query extends GetQueryParams<Operation>,
+  Headers extends GetHeaders<Operation>,
+  Response extends Get2xxReponses<Operation>,
 >(
   path: Path,
   // see: https://stackoverflow.com/a/78720068/11463241
   ...config: HasRequiredProperties<
-    Headers & Query & PathParams & Body & MethodProp
+    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
   > extends true
     ? [
         config: UntypedFetchOptions &
-          MethodProp &
+          GetMethodProp<MethodOptions, Method> &
           Body &
           PathParams &
           Query &
@@ -179,7 +180,7 @@ export type Fetch<Paths extends Record<string, any>> = <
       ]
     : [
         config?: UntypedFetchOptions &
-          MethodProp &
+          GetMethodProp<MethodOptions, Method> &
           Body &
           PathParams &
           Query &
@@ -213,27 +214,23 @@ export type UseFetch<
   Paths extends Record<string, any>,
   Lazy extends boolean = false,
 > = <
-  Path extends keyof Paths & string = keyof Paths & string,
-  Method extends GetSupportedHttpMethod<
-    Paths,
-    Path
-  > = 'get' extends GetSupportedHttpMethod<Paths, Path>
-    ? 'get'
-    : GetSupportedHttpMethod<Paths, Path>,
-  MethodProp extends GetMethodProp<Method> = GetMethodProp<Method>,
-  Operation extends Paths[Path][Method] = Paths[Path][Method],
-  Body extends GetBody<Operation> = GetBody<Operation>,
-  PathParams extends GetPathParams<Operation> = GetPathParams<Operation>,
-  Query extends GetQueryParams<Operation> = GetQueryParams<Operation>,
-  Headers extends GetHeaders<Operation> = GetHeaders<Operation>,
-  Response extends Get2xxReponses<Operation> = Get2xxReponses<Operation>,
+  Path extends keyof Paths,
+  PathInfo extends Paths[Path],
+  MethodOptions extends GetMethodOptions<PathInfo>,
+  Method extends Extract<MethodOptions, string>,
+  Operation extends Paths[Path][Method],
+  Body extends GetBody<Operation>,
+  PathParams extends GetPathParams<Operation>,
+  Query extends GetQueryParams<Operation>,
+  Headers extends GetHeaders<Operation>,
+  Response extends Get2xxReponses<Operation>,
   ErrorT = FetchError,
   PickKeys extends KeysOf<Response> = KeysOf<Response>,
   DefaultT = DefaultAsyncDataValue,
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
-    Headers & Query & PathParams & Body & MethodProp
+    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
   > extends true
     ? [
         opts: UntypedUseLazyFetchOptions<
@@ -243,11 +240,13 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<MethodProp> &
-          ComputedOptions<Body> &
-          ComputedOptions<PathParams> &
-          ComputedOptions<Query> &
-          ComputedOptions<Headers>,
+          ComputedOptions<
+            Headers &
+              Query &
+              PathParams &
+              Body &
+              GetMethodProp<MethodOptions, Method>
+          >,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -257,11 +256,13 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<MethodProp> &
-          ComputedOptions<Body> &
-          ComputedOptions<PathParams> &
-          ComputedOptions<Query> &
-          ComputedOptions<Headers>,
+          ComputedOptions<
+            Headers &
+              Query &
+              PathParams &
+              Body &
+              GetMethodProp<MethodOptions, Method>
+          >,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
