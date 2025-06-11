@@ -12,7 +12,7 @@ import type {
   PickFrom,
   KeysOf,
 } from '../../node_modules/nuxt/dist/app/composables/asyncData';
-import type { MaybeRef, Ref } from 'vue';
+import type { Ref } from 'vue';
 import type {
   HasRequiredProperties,
   OmitStrict,
@@ -142,19 +142,6 @@ type GetMethodProp<Methods, Method> = 'get' extends Methods
       method: Method extends string ? Uppercase<Method> | Method : Method;
     };
 
-type GetComputedMethodProp<Methods, Method> = 'get' extends Methods
-  ? {
-      // method is optional when u can do get
-      method?: Method extends string
-        ? MaybeRef<Uppercase<Method> | Method>
-        : MaybeRef<Method>;
-    }
-  : {
-      method: Method extends string
-        ? MaybeRef<Uppercase<Method> | Method>
-        : MaybeRef<Method>;
-    };
-
 export type SimplifiedFetchOptions = FetchOptions & {
   pathParams?: Record<string, string | number>;
 };
@@ -240,11 +227,7 @@ export type UseFetch<
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
-    Headers &
-      Query &
-      PathParams &
-      Body &
-      GetComputedMethodProp<MethodOptions, Method>
+    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
   > extends true
     ? [
         opts: UntypedUseLazyFetchOptions<
@@ -254,8 +237,13 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          GetComputedMethodProp<MethodOptions, Method> &
-          ComputedOptions<Headers & Query & PathParams & Body>,
+          ComputedOptions<
+            Headers &
+              Query &
+              PathParams &
+              Body &
+              GetMethodProp<MethodOptions, Method>
+          >,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -265,8 +253,13 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? { lazy?: boolean } : {}) &
-          GetComputedMethodProp<MethodOptions, Method> &
-          ComputedOptions<Headers & Query & PathParams & Body>,
+          ComputedOptions<
+            Headers &
+              Query &
+              PathParams &
+              Body &
+              GetMethodProp<MethodOptions, Method>
+          >,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
