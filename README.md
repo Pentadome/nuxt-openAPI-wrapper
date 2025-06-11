@@ -85,8 +85,6 @@ export default defineNuxtConfig({
 
 Add a new ts file to your composables folder, e.g. `./composables/githubClient.ts`.
 
-[Full example here](playground/composables/customGithubFetch.ts)
-
 ```ts
 // import the base client explicitly
 import {
@@ -110,6 +108,8 @@ export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
 
 // Do the same for useGithubFetch and useLazyGithubFetch
 ```
+
+[Full example here](playground/composables/customGithubFetch.ts)
 
 ## Contribution
 
