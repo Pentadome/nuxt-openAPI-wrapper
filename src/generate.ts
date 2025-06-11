@@ -3,7 +3,10 @@ import type { ApiConfig, ResolvedConfig } from './config';
 import path from 'node:path';
 import { globSync } from 'node:fs';
 import assert from 'node:assert';
-import openapiTS, { astToString } from 'openapi-typescript';
+import openapiTS, {
+  astToString,
+  type OpenAPITSOptions,
+} from 'openapi-typescript';
 import { addImports, addTemplate, createResolver } from '@nuxt/kit';
 import { pascalCase } from 'es-toolkit';
 
@@ -162,6 +165,12 @@ type GetOpenApiTsConfigArgs = {
   //redoc: RedocConfig | undefined;
 };
 
+const staticOpenApiTsConfig = {
+  generatePathParams: true,
+  pathParamsAsTypes: false,
+  
+} as const satisfies OpenAPITSOptions;
+
 const getOpenApiTs = async ({
   apiConfig,
   collectionName,
@@ -169,14 +178,17 @@ const getOpenApiTs = async ({
   nuxt,
 }: GetOpenApiTsConfigArgs) => {
   if (!apiConfig.openApi && moduleConfig.autoDiscover === false) {
-    throw new Error('apiConfig is required when auto discovery is disabled');
+    throw new Error(
+      "The api config property 'openApi' is required when auto discovery is disabled",
+    );
   }
 
+  const openApiTsConfig = apiConfig.openApiTsConfig
+    ? { ...apiConfig.openApiTsConfig, ...staticOpenApiTsConfig }
+    : { ...moduleConfig.openApiTsConfig, ...staticOpenApiTsConfig };
+
   if (apiConfig.openApi) {
-    return await openapiTS(
-      apiConfig.openApi,
-      apiConfig.openApiTsConfig ?? moduleConfig.openApiTsConfig,
-    );
+    return await openapiTS(apiConfig.openApi, openApiTsConfig);
   }
 
   const optionsFilePath = discoverOpenApiObjectFilePath({
@@ -185,10 +197,7 @@ const getOpenApiTs = async ({
     collectionName,
   });
 
-  return await openapiTS(
-    new URL(optionsFilePath),
-    apiConfig.openApiTsConfig ?? moduleConfig.openApiTsConfig,
-  );
+  return await openapiTS(new URL(optionsFilePath), openApiTsConfig);
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {

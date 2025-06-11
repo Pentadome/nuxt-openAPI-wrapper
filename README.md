@@ -25,7 +25,7 @@ Generates a typesafe fetch client for Nuxt using [Openapi-ts](https://github.com
 Install the module:
 
 ```bash
-npx nuxi module add nuxt-openAPI-wrapper
+npx nuxi module add nuxt-openapi-wrapper
 ```
 
 Configure the api clients:
