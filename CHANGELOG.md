@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.10
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.9...v1.0.10)
+
+### 🏡 Chore
+
+- Minor update to readme ([13194f3](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/13194f3))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.9
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.8...v1.0.9)
