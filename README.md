@@ -103,7 +103,7 @@ export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
 
   opts.onResponse = (ctx) => console.log('response!');
 
-  return _fetchGithub(path, opts);
+  return _$fetchGithub(path, opts);
 };
 
 // Do the same for useGithubFetch and useLazyGithubFetch
