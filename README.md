@@ -83,7 +83,9 @@ export default defineNuxtConfig({
         ...
 ```
 
-Add a new ts file to your composables folder, e.g. `./composables/githubClient.ts`
+Add a new ts file to your composables folder, e.g. `./composables/githubClient.ts`.
+
+[Full example here](playground/composables/customGithubFetch.ts)
 
 ```ts
 // import the base client explicitly
