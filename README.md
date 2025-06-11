@@ -14,7 +14,7 @@ Find and replace all on all files (CMD+SHIFT+F):
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-Generates a typesafe fetch client for Nuxt using OpenAPI.
+Generates a typesafe fetch client for Nuxt using [Openapi-ts](https://github.com/openapi-ts/openapi-typescript).
 
 <!-- - [✨ &nbsp;Release Notes](/CHANGELOG.md) -->
   <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/nuxt-openAPI-wrapper?file=playground%2Fapp.vue) -->
