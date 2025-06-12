@@ -101,6 +101,8 @@ ${tsIgnoreError}
 export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?) => {
   const options = (opts ?? {}) as SimplifiedUseFetchOptions;
 
+  options.lazy = true;
+
   ${tsIgnoreError}
   return ${useClientName}(path, options);
 }
