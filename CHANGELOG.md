@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.0.13
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.12...v1.0.13)
+
+### 🩹 Fixes
+
+- Minor mistake in readme.me ([0b22f01](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/0b22f01))
+- Lazy fetch not being lazy ([af4b383](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/af4b383))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.12
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.11...v1.0.12)
