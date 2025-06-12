@@ -6,7 +6,7 @@ import { type MaybeRef, type ComputedRef, computed, unref } from 'vue';
  * @example ensureArray(['value1', 'value2']) // returns ['value1', 'value2'] (same reference as input)
  */
 export const ensureArray = <T>(value: T | T[] | undefined): T[] => {
-  if (!value) return [];
+  if (value === undefined) return [];
   if (Array.isArray(value)) return value;
   return [value];
 };
@@ -28,5 +28,3 @@ export const ensureArrayComputed = <T>(
     return ensureArray(rawValue);
   });
 };
-
-
