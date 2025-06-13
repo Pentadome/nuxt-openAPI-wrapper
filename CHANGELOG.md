@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.15
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.14...v1.0.15)
+
+### 🩹 Fixes
+
+- Wrong overload resolution ([4a7b6cc](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/4a7b6cc))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.14
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.13...v1.0.14)
