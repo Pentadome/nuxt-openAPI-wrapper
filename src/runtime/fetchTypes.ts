@@ -69,21 +69,29 @@ type GetSupportedHttpMethods<PathInfo extends PlainObject> = {
     : never;
 }[keyof PathInfo];
 
+/* eslint-disable @typescript-eslint/no-invalid-void-type -- this is about a response type, so void is valid */
 type Get2xxReponses<Operation> = Operation extends { responses: {} }
   ? {
       [key in keyof Operation['responses']]: key extends string | number
         ? `${key}` extends `2${string}`
-          ? Operation['responses'][key] extends {
-              content: {
-                'application/json': {};
-              };
-            }
-            ? Operation['responses'][key]['content']['application/json']
-            : never
+          ? Operation['responses'][key] extends never | undefined | null
+            ? void
+            : Operation['responses'][key] extends {
+                  content?: null | undefined | never;
+                }
+              ? void
+              : Operation['responses'][key] extends {
+                    content: {
+                      'application/json': {};
+                    };
+                  }
+                ? Operation['responses'][key]['content']['application/json']
+                : unknown
           : never
         : never;
     }[keyof Operation['responses']]
   : unknown;
+/* eslint-enable @typescript-eslint/no-invalid-void-type */
 
 type GetBody<Operation> = Operation extends {
   requestBody: {
@@ -131,10 +139,10 @@ type GetHeaders<Operation> = Operation extends {
 type GetMethodProp<Methods, Method> = 'get' extends Methods
   ? {
       // method is optional when u can do get
-      method?: Method extends string ? Uppercase<Method> | Method : Method;
+      method?: Method;
     }
   : {
-      method: Method extends string ? Uppercase<Method> | Method : Method;
+      method: Method;
     };
 
 export type SimplifiedFetchOptions = FetchOptions & {
@@ -148,9 +156,15 @@ export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
 export type Fetch<Paths extends Record<string, any>> = <
   Path extends keyof Paths,
   PathInfo extends Paths[Path],
+  // credit to nuxt-open-fetch for the complex method generics.
   MethodOptions extends GetSupportedHttpMethods<PathInfo>,
-  Method extends Extract<MethodOptions, string>,
-  Operation extends Paths[Path][Method],
+  MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
+  Method extends Lowercase<MethodLiteral> extends MethodOptions
+    ? Lowercase<MethodLiteral>
+    : MethodOptions,
+  // use get when method is not specified
+  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  Operation extends PathInfo[ResolvedMethod],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
@@ -160,11 +174,15 @@ export type Fetch<Paths extends Record<string, any>> = <
   path: Path,
   // see: https://stackoverflow.com/a/78720068/11463241
   ...config: HasRequiredProperties<
-    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
+    Headers &
+      Query &
+      PathParams &
+      Body &
+      GetMethodProp<MethodOptions, MethodLiteral>
   > extends true
     ? [
         config: UntypedFetchOptions &
-          GetMethodProp<MethodOptions, Method> &
+          GetMethodProp<MethodOptions, MethodLiteral> &
           Body &
           PathParams &
           Query &
@@ -172,7 +190,7 @@ export type Fetch<Paths extends Record<string, any>> = <
       ]
     : [
         config?: UntypedFetchOptions &
-          GetMethodProp<MethodOptions, Method> &
+          GetMethodProp<MethodOptions, MethodLiteral> &
           Body &
           PathParams &
           Query &
@@ -208,9 +226,15 @@ export type UseFetch<
 > = <
   Path extends keyof Paths,
   PathInfo extends Paths[Path],
+  // credit to nuxt-open-fetch for the complex method generics.
   MethodOptions extends GetSupportedHttpMethods<PathInfo>,
-  Method extends Extract<MethodOptions, string>,
-  Operation extends Paths[Path][Method],
+  MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
+  Method extends Lowercase<MethodLiteral> extends MethodOptions
+    ? Lowercase<MethodLiteral>
+    : MethodOptions,
+  // use get when method is not specified
+  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  Operation extends PathInfo[ResolvedMethod],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
