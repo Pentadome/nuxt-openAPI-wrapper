@@ -231,7 +231,7 @@ export type UseFetch<
           PickKeys,
           DefaultT
         > &
-          (Lazy extends false ? { lazy?: boolean } : {}) &
+          (Lazy extends false ? LazyFetchOption : {}) &
           ComputedOptions<
             Headers &
               Query &
@@ -247,7 +247,7 @@ export type UseFetch<
           PickKeys,
           DefaultT
         > &
-          (Lazy extends false ? { lazy?: boolean } : {}) &
+          (Lazy extends false ? LazyFetchOption : {}) &
           ComputedOptions<
             Headers &
               Query &
