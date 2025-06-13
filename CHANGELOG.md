@@ -1,6 +1,19 @@
 # Changelog
 
 
+## v1.0.14
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.13...v1.0.14)
+
+### 🩹 Fixes
+
+- Logic error in ensureArray ([8eb553a](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/8eb553a))
+- Result type sometimes incorrrectly an union of types ([fb69d6f](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/fb69d6f))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.13
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.12...v1.0.13)

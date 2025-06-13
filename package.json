@@ -1,6 +1,6 @@
 {
   "name": "nuxt-openapi-wrapper",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "An openapi client wrapper for Nuxt fetch client.",
   "repository": "Pentadome/nuxt-openAPI-wrapper",
   "license": "MIT",
