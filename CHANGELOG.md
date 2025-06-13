@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.0.16
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.15...v1.0.16)
+
+### 🩹 Fixes
+
+- Uppercase method not working in useFetch functions ([c026090](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/c026090))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.15
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.14...v1.0.15)
