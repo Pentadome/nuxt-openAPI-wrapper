@@ -48,6 +48,8 @@ type UntypedUseLazyFetchOptions<
   UntypedOptionsToReplaceWithTypedOptions | 'lazy'
 >;
 
+type LazyFetchOption = Pick<UseFetchOptions<void>, 'lazy'>;
+
 type HTTPMethod =
   | 'get'
   | 'head'
@@ -66,11 +68,6 @@ type GetSupportedHttpMethods<PathInfo extends PlainObject> = {
       : never
     : never;
 }[keyof PathInfo];
-
-type GetMethodOptions<PathInfo extends PlainObject> =
-  'get' extends GetSupportedHttpMethods<PathInfo>
-    ? GetSupportedHttpMethods<PathInfo> | undefined
-    : GetSupportedHttpMethods<PathInfo>;
 
 type Get2xxReponses<Operation> = Operation extends { responses: {} }
   ? {
@@ -131,14 +128,25 @@ type GetHeaders<Operation> = Operation extends {
     : { headers?: Operation['parameters']['header'] & PlainObject }
   : { headers?: PlainObject };
 
-type GetMethodProp<Methods, Method> = 'get' extends Methods
+type GetMethodProp<Methods extends string> = 'get' extends Methods
   ? {
       // method is optional when u can do get
-      method?: Method extends string ? Uppercase<Method> | Method : Method;
+      method?: Methods | Uppercase<Methods>;
     }
   : {
-      method: Method extends string ? Uppercase<Method> | Method : Method;
+      method: Methods | Uppercase<Methods>;
     };
+
+type GetMethod<ObjectWithMethodProp extends PlainObject> =
+  ObjectWithMethodProp extends {}
+    ? 'get'
+    : ObjectWithMethodProp extends {
+          method: infer U;
+        }
+      ? U extends string
+        ? Lowercase<U>
+        : never
+      : never;
 
 export type SimplifiedFetchOptions = FetchOptions & {
   pathParams?: Record<string, string | number>;
@@ -151,9 +159,10 @@ export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
 export type Fetch<Paths extends Record<string, any>> = <
   Path extends keyof Paths,
   PathInfo extends Paths[Path],
-  MethodOptions extends GetMethodOptions<PathInfo>,
-  Method extends Extract<MethodOptions, string>,
-  Operation extends Paths[Path][Method],
+  MethodOptions extends GetSupportedHttpMethods<PathInfo>,
+  MethodProp extends GetMethodProp<MethodOptions>,
+  Method extends GetMethod<MethodProp>,
+  Operation extends PathInfo[Method],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
@@ -163,11 +172,11 @@ export type Fetch<Paths extends Record<string, any>> = <
   path: Path,
   // see: https://stackoverflow.com/a/78720068/11463241
   ...config: HasRequiredProperties<
-    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
+    Headers & Query & PathParams & Body & MethodProp
   > extends true
     ? [
         config: UntypedFetchOptions &
-          GetMethodProp<MethodOptions, Method> &
+          MethodProp &
           Body &
           PathParams &
           Query &
@@ -175,7 +184,7 @@ export type Fetch<Paths extends Record<string, any>> = <
       ]
     : [
         config?: UntypedFetchOptions &
-          GetMethodProp<MethodOptions, Method> &
+          MethodProp &
           Body &
           PathParams &
           Query &
@@ -211,9 +220,10 @@ export type UseFetch<
 > = <
   Path extends keyof Paths,
   PathInfo extends Paths[Path],
-  MethodOptions extends GetMethodOptions<PathInfo>,
-  Method extends Extract<MethodOptions, string>,
-  Operation extends Paths[Path][Method],
+  MethodOptions extends GetSupportedHttpMethods<PathInfo>,
+  MethodProp extends GetMethodProp<MethodOptions>,
+  Method extends GetMethod<MethodProp>,
+  Operation extends PathInfo[Method],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
@@ -225,7 +235,7 @@ export type UseFetch<
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
-    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
+    Headers & Query & PathParams & Body & MethodProp
   > extends true
     ? [
         opts: UntypedUseLazyFetchOptions<
@@ -234,14 +244,8 @@ export type UseFetch<
           PickKeys,
           DefaultT
         > &
-          (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, Method>
-          >,
+          (Lazy extends false ? LazyFetchOption : {}) &
+          ComputedOptions<Headers & Query & PathParams & Body & MethodProp>,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -250,14 +254,8 @@ export type UseFetch<
           PickKeys,
           DefaultT
         > &
-          (Lazy extends false ? { lazy?: boolean } : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, Method>
-          >,
+          (Lazy extends false ? LazyFetchOption : {}) &
+          ComputedOptions<Headers & Query & PathParams & Body & MethodProp>,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
