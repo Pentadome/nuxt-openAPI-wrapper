@@ -246,7 +246,11 @@ export type UseFetch<
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
-    Headers & Query & PathParams & Body & GetMethodProp<MethodOptions, Method>
+    Headers &
+      Query &
+      PathParams &
+      Body &
+      GetMethodProp<MethodOptions, MethodLiteral>
   > extends true
     ? [
         opts: UntypedUseLazyFetchOptions<
@@ -261,7 +265,7 @@ export type UseFetch<
               Query &
               PathParams &
               Body &
-              GetMethodProp<MethodOptions, Method>
+              GetMethodProp<MethodOptions, MethodLiteral>
           >,
       ]
     : [
@@ -277,7 +281,7 @@ export type UseFetch<
               Query &
               PathParams &
               Body &
-              GetMethodProp<MethodOptions, Method>
+              GetMethodProp<MethodOptions, MethodLiteral>
           >,
       ]
 ) => AsyncData<
