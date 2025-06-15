@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.1.0
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.16...v1.1.0)
+
+### 🚀 Enhancements
+
+- Add typesafe error response ([2114d7b](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/2114d7b))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.0.16
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.15...v1.0.16)
