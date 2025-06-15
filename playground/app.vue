@@ -33,7 +33,7 @@ const _result3 = useCustomGithubFetch('/advisories/{ghsa_id}', {
   lazy: true,
 });
 
-useLazyCustomGithubFetch('/', { lazy: true /* todo: why no type error? */ });
+useLazyCustomGithubFetch('/');
 
 // check for type error
 const _test3: GithubComponents['schemas']['global-advisory'] | null =
