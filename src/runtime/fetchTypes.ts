@@ -70,10 +70,13 @@ type GetSupportedHttpMethods<PathInfo extends PlainObject> = {
 }[keyof PathInfo];
 
 /* eslint-disable @typescript-eslint/no-invalid-void-type -- this is about a response type, so void is valid */
-type Get2xxReponses<Operation> = Operation extends { responses: {} }
+type GetReponses<
+  Operation,
+  StatusCode extends string = `2${string}`,
+> = Operation extends { responses: {} }
   ? {
       [key in keyof Operation['responses']]: key extends string | number
-        ? `${key}` extends `2${string}`
+        ? `${key}` extends StatusCode
           ? Operation['responses'][key] extends never | undefined | null
             ? void
             : Operation['responses'][key] extends {
@@ -169,7 +172,7 @@ export type Fetch<Paths extends Record<string, any>> = <
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
   Headers extends GetHeaders<Operation>,
-  Response extends Get2xxReponses<Operation>,
+  Response extends GetReponses<Operation>,
 >(
   path: Path,
   // see: https://stackoverflow.com/a/78720068/11463241
@@ -239,8 +242,8 @@ export type UseFetch<
   PathParams extends GetPathParams<Operation>,
   Query extends GetQueryParams<Operation>,
   Headers extends GetHeaders<Operation>,
-  Response extends Get2xxReponses<Operation>,
-  ErrorT = FetchError,
+  Response extends GetReponses<Operation>,
+  ErrorT = FetchError<GetReponses<Operation, `4${string}` | `5${string}`>>,
   PickKeys extends KeysOf<Response> = KeysOf<Response>,
   DefaultT = DefaultAsyncDataValue,
 >(
