@@ -16,7 +16,7 @@ import type {
   ComputedOptions,
   PlainObject,
 } from './typeUtils';
-import type { Ref } from 'vue';
+import type { MaybeRef, Ref } from 'vue';
 export type { FetchOptions } from 'ofetch';
 export type { ComputedOptions } from './typeUtils';
 
@@ -153,7 +153,7 @@ export type SimplifiedFetchOptions = FetchOptions & {
 };
 
 export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
-  pathParams?: ComputedOptions<Record<string, string | number>>;
+  pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
 };
 
 export type Fetch<Paths extends Record<string, any>> = <

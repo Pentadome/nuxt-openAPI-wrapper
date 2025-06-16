@@ -18,9 +18,13 @@ export const handleUseFetchPathParams = (
   path: string | Ref<string> | (() => string),
   pathParams: MaybeRef<ComputedOptions<PathParams>>,
 ) => {
+  // unref the outer ref and unwrap all the inner refs using reactive.
+  const reactivePathParams = computed(
+    () => reactive(unref(pathParams)) as PathParams,
+  );
+
   return computed(() => {
-    const reactivePathParams = reactive(unref(pathParams)) as PathParams;
-    return handleFetchPathParams(toValue(path), reactivePathParams);
+    return handleFetchPathParams(toValue(path), reactivePathParams.value);
   });
 };
 
