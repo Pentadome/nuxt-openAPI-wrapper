@@ -263,13 +263,11 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? LazyFetchOption : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, MethodLiteral>
-          >,
+          ComputedOptions<Headers> &
+          ComputedOptions<Query> &
+          ComputedOptions<PathParams> &
+          ComputedOptions<Body> &
+          ComputedOptions<GetMethodProp<MethodOptions, MethodLiteral>>,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -279,13 +277,11 @@ export type UseFetch<
           DefaultT
         > &
           (Lazy extends false ? LazyFetchOption : {}) &
-          ComputedOptions<
-            Headers &
-              Query &
-              PathParams &
-              Body &
-              GetMethodProp<MethodOptions, MethodLiteral>
-          >,
+          ComputedOptions<Headers> &
+          ComputedOptions<Query> &
+          ComputedOptions<PathParams> &
+          ComputedOptions<Body> &
+          ComputedOptions<GetMethodProp<MethodOptions, MethodLiteral>>,
       ]
 ) => AsyncData<
   PickFrom<Response, PickKeys> | DefaultT,
