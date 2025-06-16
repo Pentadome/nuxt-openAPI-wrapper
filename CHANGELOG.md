@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v1.1.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.1.0...v1.1.1)
+
+### 🩹 Fixes
+
+- Sometimes type error while using refs with queries ([de6b7d2](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/de6b7d2))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.1.0
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.0.16...v1.1.0)
