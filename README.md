@@ -32,7 +32,7 @@ Configure the api clients:
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-openAPI-wrapper'],
+  modules: ['nuxt-openapi-wrapper'],
   openAPIWrapper: {
     autoImport: true,
     // config options for openAPI-ts
@@ -74,7 +74,7 @@ Disable auto import for the base client
 
 ```ts
 export default defineNuxtConfig({
-  modules: ['nuxt-openAPI-wrapper'],
+  modules: ['nuxt-openapi-wrapper'],
   openAPIWrapper: {
     apis: {
       github: {
