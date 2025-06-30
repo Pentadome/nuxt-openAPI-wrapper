@@ -14,6 +14,8 @@ export type AutoDiscoverConfig = {
   openApiFileName?: string;
 };
 
+type SupportTarget = 'nitro' | 'nuxt';
+
 // Module options TypeScript interface definition
 export type ModuleOptions = GlobalOrSpecificOptions & {
   /**
@@ -72,6 +74,9 @@ export type ModuleOptions = GlobalOrSpecificOptions & {
   );
 
 export type GlobalOrSpecificOptions = {
+  /** @default ['nitro', 'nuxt'] */
+  for?: SupportTarget | SupportTarget[];
+
   /**
    * The [openapi-ts config]{@link https://openapi-ts.dev/cli#flags} to pass to the generator
    * @default { generatePathParams: true, pathParamsAsTypes: false, alphabetize: true, } */
@@ -119,6 +124,7 @@ export const defaultConfig = {
     alphabetize: true,
   },
   autoImport: true,
+  for: ['nitro', 'nuxt'],
 } as const satisfies ModuleOptions;
 
 export const applyConfig = (config: ModuleOptions) => {

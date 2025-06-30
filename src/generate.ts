@@ -7,8 +7,16 @@ import openapiTS, {
   astToString,
   type OpenAPITSOptions,
 } from 'openapi-typescript';
-import { addImports, addTemplate, createResolver } from '@nuxt/kit';
+import {
+  addImports,
+  addServerImports,
+  addServerTemplate,
+  addTemplate,
+  createResolver,
+  resolvePath,
+} from '@nuxt/kit';
 import { pascalCase } from 'es-toolkit';
+import { ensureArray } from './runtime/fetchUtils';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
@@ -26,7 +34,8 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
   const apis = Object.entries(moduleConfig.apis);
   const resolver = createResolver(import.meta.url);
 
-  const addedFiles = new Set<string>();
+  const addedNuxtFiles = new Set<string>();
+  const addedNitroFiles = new Set<string>();
   for (const [collectionName, apiConfig] of apis) {
     const openApiTsFilePath = `${moduleFolderName}/${collectionName}/${openApiTsFileName}.ts`;
 
@@ -49,16 +58,19 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
     const pathsTypeName = `${pascalCasedName}Paths`;
     const componentsTypeName = `${pascalCasedName}Components`;
 
-    const clientPath = `${moduleFolderName}/${collectionName}/index.ts`;
     const clientName = `$fetch${pascalCasedName}`;
     const useClientName = `use${pascalCasedName}Fetch`;
     const useLazyClientName = `useLazy${pascalCasedName}Fetch`;
 
-    const { dst } = addTemplate({
-      filename: clientPath,
-      write: true,
-      getContents: () => {
-        return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
+    const target = ensureArray(apiConfig.for ?? moduleConfig.for);
+
+    if (target.includes('nuxt')) {
+      const nuxtClientPath = `${moduleFolderName}/${collectionName}/index.ts`;
+      const { dst } = addTemplate({
+        filename: nuxtClientPath,
+        write: true,
+        getContents: () => {
+          return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
 import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
 import { useFetch } from 'nuxt/app';
 import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
@@ -107,53 +119,104 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
   return ${useClientName}(path, options);
 }
 `;
-      },
-    });
+        },
+      });
 
-    addedFiles.add(dst);
+      addedNuxtFiles.add(dst);
 
-    if (apiConfig.autoImport ?? moduleConfig.autoImport)
-      addImports([
-        {
-          name: pathsTypeName,
-          from: dst,
-          type: true,
-        },
-        {
-          name: clientName,
-          from: dst,
-        },
-        {
-          name: useClientName,
-          from: dst,
-        },
-        {
-          name: useLazyClientName,
-          from: dst,
-        },
-      ]);
+      if (apiConfig.autoImport ?? moduleConfig.autoImport)
+        addImports([
+          {
+            name: pathsTypeName,
+            from: dst,
+            type: true,
+          },
+          {
+            name: clientName,
+            from: dst,
+          },
+          {
+            name: useClientName,
+            from: dst,
+          },
+          {
+            name: useLazyClientName,
+            from: dst,
+          },
+        ]);
+    }
+
+    if (target.includes('nitro')) {
+      const nitroClientPath = `${moduleFolderName}/${collectionName}/nitro.ts`;
+      const { filename } = addTemplate({
+        filename: nitroClientPath,
+        getContents: () =>
+          `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
+import type { Fetch, SimplifiedFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
+import { handleFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
+
+export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
+
+${tsIgnoreError} 
+export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
+  const options = (opts ?? {}) as SimplifiedFetchOptions
+  options.baseURL ??= "${apiConfig.baseUrl}"
+
+  let finalPath = path as string
+  if (options.pathParams) {
+      finalPath = handleFetchPathParams(path, options.pathParams)
   }
 
-  addTemplate({
-    filename: `${moduleFolderName}/index.ts`,
-    getContents: () => {
-      const result = addedFiles
-        .values()
-        .map((x) => {
-          // get rid of '.ts' extension
-          const exportFrom = path.join(path.dirname(x), path.parse(x).name);
-          return `export * from "${resolver.resolve(exportFrom)}";`;
-        })
-        .toArray();
+  const { pathParams, ...rest } = options;
+  
+  ${tsIgnoreError} 
+  return $fetch(finalPath, rest)
+};`,
+      });
 
-      result.unshift(
-        `export type * from "${resolver.resolve('./runtime/fetchTypes')}";\nexport * from "${resolver.resolve('./runtime/fetchUtils')}"`,
-      );
+      const fullPath = path.join(nuxt.options.buildDir, filename);
 
-      return result.join('\n');
-    },
-    write: true,
-  });
+      addedNitroFiles.add(fullPath);
+
+      if (apiConfig.autoImport ?? moduleConfig.autoImport)
+        addServerImports([
+          {
+            name: pathsTypeName,
+            from: fullPath,
+            type: true,
+          },
+          {
+            name: clientName,
+            from: fullPath,
+          },
+        ]);
+    }
+  }
+
+  if (addedNuxtFiles.size > 0)
+    addTemplate({
+      filename: `${moduleFolderName}/index.ts`,
+      getContents: () => {
+        const result = addedNuxtFiles
+          .values()
+          .map((x) => {
+            // get rid of '.ts' extension
+            const exportFrom = path.join(path.dirname(x), path.parse(x).name);
+            return `export * from "${resolver.resolve(exportFrom)}";`;
+          })
+          .toArray();
+
+        result.unshift(
+          `export type * from "${resolver.resolve('./runtime/fetchTypes')}";\nexport * from "${resolver.resolve('./runtime/fetchUtils')}"`,
+        );
+
+        return result.join('\n');
+      },
+      write: true,
+    });
+
+  if (addedNitroFiles.size > 0) {
+  }
 };
 
 type GetOpenApiTsConfigArgs = {
@@ -195,7 +258,7 @@ const getOpenApiTs = async ({
     collectionName,
   });
 
-  return await openapiTS(new URL(optionsFilePath), openApiTsConfig);
+  return await openapiTS(optionsFilePath, openApiTsConfig);
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {
