@@ -14,14 +14,12 @@ export type AutoDiscoverConfig = {
   openApiFileName?: string;
 };
 
-type SupportTarget = 'nitro' | 'nuxt';
-
 // Module options TypeScript interface definition
 export type ModuleOptions = GlobalOrSpecificOptions & {
-  /**
-   * Enable/disable the auto import of clients
-   * @default true */
-  autoImport?: boolean;
+  /** Configure the generation of clients.
+   * @default { nuxt: true, nitro: true}
+   */
+  clients?: ClientsConfig;
 } & (
     | {
         /**
@@ -73,10 +71,17 @@ export type ModuleOptions = GlobalOrSpecificOptions & {
       }
   );
 
-export type GlobalOrSpecificOptions = {
-  /** @default ['nitro', 'nuxt'] */
-  for?: SupportTarget | SupportTarget[];
+type ClientConfig = {
+  /** @default true */
+  autoImport?: boolean;
+};
 
+type ClientsConfig = {
+  nitro?: false | ClientConfig;
+  nuxt?: false | ClientConfig;
+};
+
+export type GlobalOrSpecificOptions = {
   /**
    * The [openapi-ts config]{@link https://openapi-ts.dev/cli#flags} to pass to the generator
    * @default { generatePathParams: true, pathParamsAsTypes: false, alphabetize: true, } */
@@ -94,10 +99,12 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
   GlobalOrSpecificOptions & {
     /** The base url for the api client to use. */
     baseUrl: string;
-    /**
-     * undefined = use global option
-     * @default undefined */
-    autoImport?: boolean;
+
+    /** Configure the generation of clients.
+     * undefined = use module config
+     * @default undefined
+     */
+    clients?: ClientsConfig;
   } & (true extends RequireOpenApiObject
       ? {
           /** The explicitly provided openapi document to use.
@@ -117,14 +124,13 @@ export const defaultConfig = {
     dirname: 'openapi',
     openApiFileName: 'openapi.{json,yaml}',
   },
+  clients: { nitro: { autoImport: true }, nuxt: { autoImport: true } },
   apis: {},
   openApiTsConfig: {
     generatePathParams: true,
     pathParamsAsTypes: false,
     alphabetize: true,
   },
-  autoImport: true,
-  for: ['nitro', 'nuxt'],
 } as const satisfies ModuleOptions;
 
 export const applyConfig = (config: ModuleOptions) => {

@@ -7,7 +7,11 @@ import type {
   DefaultAsyncDataErrorValue,
   DefaultAsyncDataValue,
 } from 'nuxt/app/defaults';
-import type { NitroFetchRequest, AvailableRouterMethod } from 'nitropack/types';
+import type {
+  NitroFetchRequest,
+  AvailableRouterMethod,
+  NitroFetchOptions,
+} from 'nitropack/types';
 import type {
   PickFrom,
   KeysOf,
@@ -32,7 +36,12 @@ export type UntypedFetchOptions = OmitStrict<
   UntypedOptionsToReplaceWithTypedOptions
 >;
 
-/** @see similair to  {@link https://github.com/nuxt/nuxt/blob/d0a61fc69061690ffda41d9dfe321e400da9da80/packages/nuxt/src/app/composables/fetch.ts#L29} */
+export type UntypedNitroFetchOptions = OmitStrict<
+  NitroFetchOptions<NitroFetchRequest>,
+  UntypedOptionsToReplaceWithTypedOptions
+>;
+
+/** @see similair to {@link https://github.com/nuxt/nuxt/blob/d0a61fc69061690ffda41d9dfe321e400da9da80/packages/nuxt/src/app/composables/fetch.ts#L29} */
 export type ComputedUntypedFetchOptions = ComputedOptions<UntypedFetchOptions>;
 
 // useFetch
@@ -152,10 +161,6 @@ export type SimplifiedFetchOptions = FetchOptions & {
   pathParams?: Record<string, string | number>;
 };
 
-export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
-  pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
-};
-
 export type Fetch<Paths extends Record<string, any>> = <
   Path extends keyof Paths,
   PathInfo extends Paths[Path],
@@ -201,27 +206,58 @@ export type Fetch<Paths extends Record<string, any>> = <
       ]
 ) => Promise<Response>;
 
-// useFetch;
-// type UseFetch = <
-//   ResT = void,
-//   ErrorT = FetchError,
-//   ReqT extends NitroFetchRequest = NitroFetchRequest,
-//   Method extends AvailableRouterMethod<ReqT> = ResT extends void
-//     ? 'get' extends AvailableRouterMethod<ReqT>
-//       ? 'get'
-//       : AvailableRouterMethod<ReqT>
-//     : AvailableRouterMethod<ReqT>,
-//   _ResT = ResT extends void ? FetchResult<ReqT, Method> : ResT,
-//   DataT = _ResT,
-//   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
-//   DefaultT = DefaultAsyncDataValue,
-// >(
-//   request: Ref<ReqT> | ReqT | (() => ReqT),
-//   opts?: UseFetchOptions<_ResT, DataT, PickKeys, DefaultT, ReqT, Method>,
-// ) => AsyncData<
-//   PickFrom<DataT, PickKeys> | DefaultT,
-//   ErrorT | DefaultAsyncDataErrorValue
-// >;
+export type SimplifiedNitroFetchOptions =
+  NitroFetchOptions<NitroFetchRequest> & {
+    pathParams?: Record<string, string | number>;
+  };
+
+export type NitroFetch<Paths extends Record<string, any>> = <
+  Path extends string & keyof Paths,
+  PathInfo extends Paths[Path],
+  // credit to nuxt-open-fetch for the complex method generics.
+  MethodOptions extends GetSupportedHttpMethods<PathInfo>,
+  MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
+  Method extends Lowercase<MethodLiteral> extends MethodOptions
+    ? Lowercase<MethodLiteral>
+    : MethodOptions,
+  // use get when method is not specified
+  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  Operation extends PathInfo[ResolvedMethod],
+  Body extends GetBody<Operation>,
+  PathParams extends GetPathParams<Operation>,
+  Query extends GetQueryParams<Operation>,
+  Headers extends GetHeaders<Operation>,
+  Response extends GetReponses<Operation>,
+>(
+  path: Path, // see: https://stackoverflow.com/a/78720068/11463241
+  ...opts: HasRequiredProperties<
+    Headers &
+      Query &
+      PathParams &
+      Body &
+      GetMethodProp<MethodOptions, MethodLiteral>
+  > extends true
+    ? [
+        config: UntypedNitroFetchOptions &
+          GetMethodProp<MethodOptions, MethodLiteral> &
+          Body &
+          PathParams &
+          Query &
+          Headers,
+      ]
+    : [
+        config?: UntypedNitroFetchOptions &
+          GetMethodProp<MethodOptions, MethodLiteral> &
+          Body &
+          PathParams &
+          Query &
+          Headers,
+      ]
+) => Promise<Response>;
+
+export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
+  pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
+};
 
 export type UseFetch<
   Paths extends Record<string, any>,
