@@ -236,7 +236,7 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
           .toArray();
 
         result.unshift(
-          `export type * from "${resolver.resolve('./runtime/server')}";\nexport * from "${resolver.resolve('./runtime/server')}"`,
+          `export * from "${resolver.resolve('./runtime/server')}"`,
         );
 
         return result.join('\n');
@@ -363,4 +363,13 @@ const setAlias = (nuxt: Nuxt) => {
     nuxt.options.buildDir,
     moduleFolderName,
   );
+
+  nuxt.hook('nitro:config', (nitro) => {
+    nitro.alias ??= {};
+    nitro.alias[`#${moduleFolderName}`] = path.join(
+      nuxt.options.buildDir,
+      moduleFolderName,
+      'nitro',
+    );
+  });
 };
