@@ -34,7 +34,6 @@ Configure the api clients:
 export default defineNuxtConfig({
   modules: ['nuxt-openapi-wrapper'],
   openAPIWrapper: {
-    autoImport: true,
     // config options for openAPI-ts
     openApiTsConfig: {},
     apis: {
@@ -79,7 +78,7 @@ export default defineNuxtConfig({
     apis: {
       github: {
         baseUrl: 'https://api.github.com',
-        autoImport: false
+        clients: { nuxt: { autoImport: false }}
         ...
 ```
 
@@ -91,7 +90,7 @@ import {
   $fetchGithub as _$fetchGithub,
   useGithubFetch as _useGithubFetch,
   useLazyGithubFetch as _useLazyGithubFetch,
-} from '#build/openapi-wrapper';
+} from '#openapi-wrapper';
 
 // you might need to add // @ts-ignore error
 export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
@@ -109,7 +108,11 @@ export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
 // Do the same for useGithubFetch and useLazyGithubFetch
 ```
 
-[Full example here](playground/composables/customGithubFetch.ts)
+You can do something similair to create a custom Nitro fetch client by creating a `./server/utils/githubClient.ts` file.
+
+[Nuxt composable example](playground/composables/customGithubFetch.ts)
+
+[Nitro utils example](playground/server/utils/customGitlabFetch.ts)
 
 ## Contribution
 
