@@ -3,7 +3,7 @@ import {
   ensureArray,
   type SimplifiedNitroFetchOptions,
 } from '#openapi-wrapper';
-import { $fetchGitlab as _$fetchGitlab } from '#openapi-wrapper';
+import { $fetchGitlab as _$fetchGitlab } from '#openapi-wrapper/gitlab';
 
 // @ts-expect-error
 export const $fetchGitlab: typeof _$fetchGitlab = (path, opts) => {

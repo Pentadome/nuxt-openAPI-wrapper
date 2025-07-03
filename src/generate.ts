@@ -13,7 +13,7 @@ import {
   addTemplate,
   createResolver,
 } from '@nuxt/kit';
-import { pascalCase, toMerged } from 'es-toolkit';
+import { kebabCase, pascalCase, toMerged } from 'es-toolkit';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
@@ -28,15 +28,14 @@ const tsIgnoreError = '//' + ' @ts-ignore-error';
 const openApiTsFileName = 'openapi-ts';
 
 export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
-  setAlias(nuxt);
-
   const apis = Object.entries(moduleConfig.apis);
   const resolver = createResolver(import.meta.url);
 
-  const addedNuxtFiles = new Set<string>();
-  const addedNitroFiles = new Set<string>();
+  const addedNuxtClientsDirNames = new Set<string>();
+  const addedNitroClientsDirNames = new Set<string>();
   for (const [collectionName, apiConfig] of apis) {
-    const openApiTsFilePath = `${moduleFolderName}/${collectionName}/${openApiTsFileName}.ts`;
+    const collectionKebab = kebabCase(collectionName);
+    const openApiTsFilePath = `${moduleFolderName}/${collectionKebab}/${openApiTsFileName}.ts`;
 
     const { dst: openAPITSTypesDST } = addTemplate({
       filename: openApiTsFilePath,
@@ -67,7 +66,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
     );
 
     if (clientConfig.nuxt !== false) {
-      const nuxtClientPath = `${moduleFolderName}/${collectionName}/index.ts`;
+      const nuxtClientPath = `${moduleFolderName}/${collectionKebab}/index.ts`;
       const { dst } = addTemplate({
         filename: nuxtClientPath,
         write: true,
@@ -124,7 +123,7 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
         },
       });
 
-      addedNuxtFiles.add(dst);
+      addedNuxtClientsDirNames.add(collectionKebab);
 
       if (clientConfig.nuxt.autoImport)
         addImports([
@@ -149,7 +148,7 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
     }
 
     if (clientConfig.nitro !== false) {
-      const nitroClientPath = `${moduleFolderName}/${collectionName}/nitro`;
+      const nitroClientPath = `${moduleFolderName}/${collectionKebab}/nitro`;
 
       addNitroTsFile(nuxt, openAPITSTypesDST, false);
 
@@ -182,7 +181,7 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
 
       addNitroTsFile(nuxt, dst, true);
 
-      addedNitroFiles.add(dst);
+      addedNitroClientsDirNames.add(collectionKebab);
 
       if (clientConfig.nitro.autoImport) {
         addServerImports([
@@ -200,17 +199,13 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
     }
   }
 
-  if (addedNuxtFiles.size > 0)
+  if (addedNuxtClientsDirNames.size > 0) {
     addTemplate({
       filename: `${moduleFolderName}/index.ts`,
       getContents: () => {
-        const result = addedNuxtFiles
+        const result = addedNuxtClientsDirNames
           .values()
-          .map((x) => {
-            // get rid of '.ts' extension
-            const exportFrom = path.join(path.dirname(x), path.parse(x).name);
-            return `export * from "${resolver.resolve(exportFrom)}";`;
-          })
+          .map((x) => `export * from "./${x}";`)
           .toArray();
 
         result.unshift(
@@ -222,17 +217,20 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
       write: true,
     });
 
-  if (addedNitroFiles.size > 0) {
+    nuxt.options.alias ??= {};
+    nuxt.options.alias[`#${moduleFolderName}`] = path.join(
+      nuxt.options.buildDir,
+      moduleFolderName,
+    );
+  }
+
+  if (addedNitroClientsDirNames.size > 0) {
     const { dst } = addTemplate({
       filename: `${moduleFolderName}/nitro.ts`,
       getContents: () => {
-        const result = addedNitroFiles
+        const result = addedNitroClientsDirNames
           .values()
-          .map((x) => {
-            // get rid of '.ts' extension
-            const exportFrom = path.join(path.dirname(x), path.parse(x).name);
-            return `export * from "${resolver.resolve(exportFrom)}";`;
-          })
+          .map((x) => `export * from "./${x}/nitro";`)
           .toArray();
 
         result.unshift(
@@ -245,6 +243,24 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
     });
 
     addNitroTsFile(nuxt, dst, true);
+
+    nuxt.hook('nitro:config', (nitro) => {
+      nitro.alias ??= {};
+      nitro.alias[`#${moduleFolderName}`] = path.join(
+        nuxt.options.buildDir,
+        moduleFolderName,
+        'nitro',
+      );
+
+      for (const client of addedNitroClientsDirNames) {
+        nitro.alias[`#${moduleFolderName}/${client}`] = path.join(
+          nuxt.options.buildDir,
+          moduleFolderName,
+          client,
+          'nitro',
+        );
+      }
+    });
   }
 };
 
@@ -355,21 +371,4 @@ const resolveClientConfig = (
     return toMerged(moduleConfig, apiConfig);
   }
   return moduleConfig;
-};
-
-const setAlias = (nuxt: Nuxt) => {
-  nuxt.options.alias ??= {};
-  nuxt.options.alias[`#${moduleFolderName}`] = path.join(
-    nuxt.options.buildDir,
-    moduleFolderName,
-  );
-
-  nuxt.hook('nitro:config', (nitro) => {
-    nitro.alias ??= {};
-    nitro.alias[`#${moduleFolderName}`] = path.join(
-      nuxt.options.buildDir,
-      moduleFolderName,
-      'nitro',
-    );
-  });
 };
