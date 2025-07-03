@@ -8,7 +8,7 @@ import {
   type ComputedUntypedFetchOptions,
   type SimplifiedFetchOptions,
   type SimplifiedUseFetchOptions,
-} from '#build/openapi-wrapper';
+} from '#openapi-wrapper';
 import type { FetchHook } from 'ofetch';
 
 // @ts-expect-error

@@ -28,6 +28,8 @@ const tsIgnoreError = '//' + ' @ts-ignore-error';
 const openApiTsFileName = 'openapi-ts';
 
 export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
+  setAlias(nuxt);
+
   const apis = Object.entries(moduleConfig.apis);
   const resolver = createResolver(import.meta.url);
 
@@ -234,7 +236,7 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
           .toArray();
 
         result.unshift(
-          `export type * from "${resolver.resolve('./runtime/fetchTypes')}";\nexport * from "${resolver.resolve('./runtime/fetchUtils')}"`,
+          `export type * from "${resolver.resolve('./runtime/server')}";\nexport * from "${resolver.resolve('./runtime/server')}"`,
         );
 
         return result.join('\n');
@@ -353,4 +355,12 @@ const resolveClientConfig = (
     return toMerged(moduleConfig, apiConfig);
   }
   return moduleConfig;
+};
+
+const setAlias = (nuxt: Nuxt) => {
+  nuxt.options.alias ??= {};
+  nuxt.options.alias[`#${moduleFolderName}`] = path.join(
+    nuxt.options.buildDir,
+    moduleFolderName,
+  );
 };

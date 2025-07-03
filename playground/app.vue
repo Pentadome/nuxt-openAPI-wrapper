@@ -8,7 +8,7 @@ import {
   useGithubFetch,
   type GithubComponents,
   type GitlabComponents,
-} from '#build/openapi-wrapper';
+} from '#openapi-wrapper';
 
 const _result = await $fetchGithub('/advisories/{ghsa_id}', {
   pathParams: {
