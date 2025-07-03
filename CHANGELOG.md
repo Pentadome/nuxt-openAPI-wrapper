@@ -1,6 +1,43 @@
 # Changelog
 
 
+## v2.0.0
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.1.1...v2.0.0)
+
+### Breaking changes
+#### Removed `autoImport` property from module and api config.
+Use `clients: { nuxt: { autoImport: false }}` to disable auto imports instead.
+
+#### The openAPITS config of the api config now gets merged with the module config.
+Example:
+```ts
+openAPIWrapper: {
+    openApiTsConfig: { immutable: true },
+    apis: {
+      github: {
+        openApiTsConfig: { additionalProperties: true }
+    },
+  },
+```
+#### Before 2.0.0
+effective config: `{ additionalProperties: true }`
+#### After 2.0.0
+effective config: `{ immutable: true, additionalProperties: true }`
+
+### 🚀 Enhancements
+
+- Nitro support ([0e63ce2](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/0e63ce2))
+
+### 🩹 Fixes
+
+- Minor mistake in readme.md ([dcaf1d8](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/dcaf1d8))
+
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v1.1.1
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.1.0...v1.1.1)

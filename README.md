@@ -7,14 +7,14 @@ Find and replace all on all files (CMD+SHIFT+F):
 - Description: My new Nuxt module
 -->
 
-# Nuxt typesafe OpenAPI wrapper
+# Nuxt Typesafe OpenAPI Fetch wrapper
 
 [![npm version][npm-version-src]][npm-version-href]
 [![npm downloads][npm-downloads-src]][npm-downloads-href]
 [![License][license-src]][license-href]
 [![Nuxt][nuxt-src]][nuxt-href]
 
-Generates a typesafe fetch client for Nuxt using [Openapi-ts](https://github.com/openapi-ts/openapi-typescript).
+Generates a typesafe fetch client for Nuxt and Nitro using [Openapi-ts](https://github.com/openapi-ts/openapi-typescript).
 
 <!-- - [✨ &nbsp;Release Notes](/CHANGELOG.md) -->
   <!-- - [🏀 Online playground](https://stackblitz.com/github/your-org/nuxt-openAPI-wrapper?file=playground%2Fapp.vue) -->
@@ -108,7 +108,7 @@ export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
 // Do the same for useGithubFetch and useLazyGithubFetch
 ```
 
-You can do something similair to create a custom Nitro fetch client by creating a `./server/utils/githubClient.ts` file.
+You can also create a custom Nitro fetch client. E.g. by creating a `./server/utils/githubClient.ts` file.
 
 [Nuxt composable example](playground/composables/customGithubFetch.ts)
 
