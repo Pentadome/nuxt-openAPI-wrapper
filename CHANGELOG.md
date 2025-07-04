@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v2.0.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.0...v2.0.1)
+
+### 🩹 Fixes
+
+- Sometimes not working in docker. chore: removed useless code ([37510a9](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/37510a9))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v2.0.0
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.1.1...v2.0.0)
