@@ -37,7 +37,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
     const collectionKebab = kebabCase(collectionName);
     const openApiTsFilePath = `${moduleFolderName}/${collectionKebab}/${openApiTsFileName}.ts`;
 
-    const { dst: openAPITSTypesDST } = addTemplate({
+    addTemplate({
       filename: openApiTsFilePath,
       getContents: async () => {
         const openApiTs = await getOpenApiTs({
@@ -150,8 +150,6 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
     if (clientConfig.nitro !== false) {
       const nitroClientPath = `${moduleFolderName}/${collectionKebab}/nitro`;
 
-      addNitroTsFile(nuxt, openAPITSTypesDST, false);
-
       const { dst } = addTemplate({
         filename: `${nitroClientPath}.ts`,
         getContents:
@@ -178,8 +176,6 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
 };`,
         write: true,
       });
-
-      addNitroTsFile(nuxt, dst, true);
 
       addedNitroClientsDirNames.add(collectionKebab);
 
@@ -225,7 +221,7 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
   }
 
   if (addedNitroClientsDirNames.size > 0) {
-    const { dst } = addTemplate({
+    addTemplate({
       filename: `${moduleFolderName}/nitro.ts`,
       getContents: () => {
         const result = addedNitroClientsDirNames
@@ -241,8 +237,6 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
       },
       write: true,
     });
-
-    addNitroTsFile(nuxt, dst, true);
 
     nuxt.hook('nitro:config', (nitro) => {
       nitro.alias ??= {};
@@ -305,8 +299,7 @@ const getOpenApiTs = async ({
     nuxt,
     collectionName,
   });
-
-  return await openapiTS(new URL(openAPIFilePath), openApiTsConfig);
+  return await openapiTS(new URL(`file://${openAPIFilePath}`), openApiTsConfig);
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {
@@ -345,22 +338,6 @@ const discoverOpenApiObjectFilePath = ({
   throw new Error(
     `no openapi file found for "${collectionName}". Used file paths: ${JSON.stringify(triedPaths)}`,
   );
-};
-
-const addNitroTsFile = (
-  nuxt: Nuxt,
-  file: string,
-  nuxtIgnore: boolean = false,
-) => {
-  nuxt.options.nitro.typescript ??= {};
-  nuxt.options.nitro.typescript.tsConfig ??= {};
-  nuxt.options.nitro.typescript.tsConfig.include ??= [];
-  nuxt.options.nitro.typescript.tsConfig.include.push(file);
-
-  if (nuxtIgnore) {
-    nuxt.options.typescript.tsConfig.exclude ??= [];
-    nuxt.options.typescript.tsConfig.exclude.push(file);
-  }
 };
 
 const resolveClientConfig = (
