@@ -5,9 +5,17 @@ import type { Ref } from 'vue';
 
 export type OmitStrict<Object, Key extends keyof Object> = Omit<Object, Key>;
 
-export type HasRequiredProperties<Object> = Object extends {} | null | undefined
-  ? false
-  : true;
+export type HasRequiredProperties<Object> =
+  // if any empty object can be assigned to Object
+  {} extends Object
+    ? false
+    : // if null can be assigned to Object
+      null extends Object
+      ? false
+      : // if undefined can be assigned to Object
+        undefined extends Object
+        ? false
+        : true;
 
 /** @see {@link https://github.com/nuxt/nuxt/blob/42114f44a60ae326b58c05afe92ad535227d8f37/packages/nuxt/src/app/composables/fetch.ts#L20} */
 export type ComputedOptions<T extends Record<string, any>> = {
