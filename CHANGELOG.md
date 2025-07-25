@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v2.0.2
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.1...v2.0.2)
+
+### 🩹 Fixes
+
+- Missing autocomplete for query params when all query params are optional ([c12959f](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/c12959f))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v2.0.1
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.0...v2.0.1)
