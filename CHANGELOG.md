@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v2.0.3
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.2...v2.0.3)
+
+### 🩹 Fixes
+
+- Mistake in HasRequiredProperties type ([1e5be5a](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/1e5be5a))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v2.0.2
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.1...v2.0.2)
