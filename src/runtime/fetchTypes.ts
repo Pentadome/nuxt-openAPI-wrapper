@@ -125,7 +125,7 @@ type GetPathParams<Operation> = Operation extends {
 
 type GetQueryParams<Operation> = Operation extends {
   parameters: {
-    query: {};
+    query?: {} | undefined | null;
   };
 }
   ? HasRequiredProperties<Operation['parameters']['query']> extends true
@@ -140,7 +140,7 @@ type GetQueryParams<Operation> = Operation extends {
 
 type GetHeaders<Operation> = Operation extends {
   parameters: {
-    header: {};
+    header?: {} | undefined | null;
   };
 }
   ? HasRequiredProperties<Operation['parameters']['header']> extends true
@@ -255,7 +255,7 @@ export type NitroFetch<Paths extends Record<string, any>> = <
       ]
 ) => Promise<Response>;
 
-export type SimplifiedUseFetchOptions = UseFetchOptions<void> & {
+export type SimplifiedUseFetchOptions = UseFetchOptions<any> & {
   pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
 };
 
