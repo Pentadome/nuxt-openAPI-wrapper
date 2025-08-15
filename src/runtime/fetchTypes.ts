@@ -133,8 +133,8 @@ type GetQueryParams<Operation> = Operation extends {
         | { params: Operation['parameters']['query'] & PlainObject }
         | { query: Operation['parameters']['query'] & PlainObject }
     : {
-        params?: Operation['parameters']['query'] & PlainObject;
-        query?: Operation['parameters']['query'] & PlainObject;
+        params?: (Operation['parameters']['query'] & PlainObject) | PlainObject;
+        query?: (Operation['parameters']['query'] & PlainObject) | PlainObject;
       }
   : { params?: PlainObject; query?: PlainObject };
 
@@ -145,7 +145,11 @@ type GetHeaders<Operation> = Operation extends {
 }
   ? HasRequiredProperties<Operation['parameters']['header']> extends true
     ? { headers: Operation['parameters']['header'] & PlainObject }
-    : { headers?: Operation['parameters']['header'] & PlainObject }
+    : {
+        headers?:
+          | (Operation['parameters']['header'] & PlainObject)
+          | PlainObject;
+      }
   : { headers?: PlainObject };
 
 type GetMethodProp<Methods, Method> = 'get' extends Methods
