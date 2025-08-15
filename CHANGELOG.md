@@ -1,6 +1,22 @@
 # Changelog
 
 
+## v2.0.4
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.3...v2.0.4)
+
+### 🩹 Fixes
+
+- Allow setting query and header when they are defined as undefined ([f0eb55d](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/f0eb55d))
+
+### 🏡 Chore
+
+- **release:** V2.0.3 ([b6497c6](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/b6497c6))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v2.0.3
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.2...v2.0.3)
