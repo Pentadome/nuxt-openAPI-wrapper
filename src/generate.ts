@@ -75,6 +75,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
 import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
 import { useFetch } from 'nuxt/app';
 import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
+import type { Ref } from 'vue'
 
 export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
 
