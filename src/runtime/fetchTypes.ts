@@ -3,10 +3,7 @@
 
 import type { FetchOptions, FetchError } from 'ofetch';
 import type { UseFetchOptions, AsyncData } from 'nuxt/app';
-import type {
-  DefaultAsyncDataErrorValue,
-  DefaultAsyncDataValue,
-} from 'nuxt/app/defaults';
+
 import type {
   NitroFetchRequest,
   AvailableRouterMethod,
@@ -44,12 +41,11 @@ export type UntypedNitroFetchOptions = OmitStrict<
 /** @see similair to {@link https://github.com/nuxt/nuxt/blob/d0a61fc69061690ffda41d9dfe321e400da9da80/packages/nuxt/src/app/composables/fetch.ts#L29} */
 export type ComputedUntypedFetchOptions = ComputedOptions<UntypedFetchOptions>;
 
-// useFetch
 type UntypedUseLazyFetchOptions<
   ResT,
   DataT = ResT,
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
-  DefaultT = DefaultAsyncDataValue,
+  DefaultT = undefined,
   R extends NitroFetchRequest = string & {},
   M extends AvailableRouterMethod<R> = AvailableRouterMethod<R>,
 > = OmitStrict<
@@ -263,6 +259,7 @@ export type SimplifiedUseFetchOptions = UseFetchOptions<any> & {
   pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
 };
 
+//function useFetch<ResT = void, ErrorT = FetchError, ReqT extends NitroFetchRequest = NitroFetchRequest, Method extends AvailableRouterMethod<ReqT> = ResT extends void ? 'get' extends AvailableRouterMethod<ReqT> ? 'get' : AvailableRouterMethod<ReqT> : AvailableRouterMethod<ReqT>, _ResT = ResT extends void ? FetchResult<ReqT, Method> : ResT, DataT = _ResT, PickKeys extends KeysOf<DataT> = KeysOf<DataT>, DefaultT = DataT>(request: Ref<ReqT> | ReqT | (() => ReqT), opts?: UseFetchOptions<_ResT, DataT, PickKeys, DefaultT, ReqT, Method>): AsyncData<PickFrom<DataT, PickKeys> | DefaultT, ErrorT | undefined>;
 export type UseFetch<
   Paths extends Record<string, any>,
   Lazy extends boolean = false,
@@ -285,7 +282,7 @@ export type UseFetch<
   Response extends GetReponses<Operation>,
   ErrorT = FetchError<GetReponses<Operation, `4${string}` | `5${string}`>>,
   PickKeys extends KeysOf<Response> = KeysOf<Response>,
-  DefaultT = DefaultAsyncDataValue,
+  DefaultT = Response,
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
@@ -323,10 +320,7 @@ export type UseFetch<
           ComputedOptions<Body> &
           ComputedOptions<GetMethodProp<MethodOptions, MethodLiteral>>,
       ]
-) => AsyncData<
-  PickFrom<Response, PickKeys> | DefaultT,
-  ErrorT | DefaultAsyncDataErrorValue
->;
+) => AsyncData<PickFrom<Response, PickKeys> | DefaultT, ErrorT | undefined>;
 
 export type UseLazyFetch<Paths extends Record<string, any>> = UseFetch<
   Paths,

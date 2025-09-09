@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     apis: {
       github: {
         baseUrl: 'https://api.github.com',
-        clients: { nuxt: { autoImport: false }, nitro: false },
+        clients: { nuxt: { autoImport: true }, nitro: { autoImport: true } },
       },
       gitlab: {
         baseUrl: 'https://gitlab.com',
