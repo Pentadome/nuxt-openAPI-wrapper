@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v3.0.0
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.4...v3.0.0)
+
+### 🏡 Chore
+
+- **release:** V2.0.4 ([98744ec](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/98744ec))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v2.0.4
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.3...v2.0.4)
