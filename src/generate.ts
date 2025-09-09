@@ -10,10 +10,13 @@ import openapiTS, {
 import {
   addImports,
   addServerImports,
+  addServerTemplate,
   addTemplate,
+  addTypeTemplate,
   createResolver,
 } from '@nuxt/kit';
 import { kebabCase, pascalCase, toMerged } from 'es-toolkit';
+import type { Alias } from 'vite';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
@@ -25,36 +28,20 @@ const moduleFolderName = 'openapi-wrapper';
 // prevent ide errors when using ts-expect-error is string template.
 const tsIgnoreError = '//' + ' @ts-ignore-error';
 
-const openApiTsFileName = 'openapi-ts';
-
 export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
   const apis = Object.entries(moduleConfig.apis);
   const resolver = createResolver(import.meta.url);
 
   const addedNuxtClientsDirNames = new Set<string>();
-  const addedNitroClientsDirNames = new Set<string>();
+  const addedNitroClientsModules = new Set<string>();
   for (const [collectionName, apiConfig] of apis) {
     const collectionKebab = kebabCase(collectionName);
-    const openApiTsFilePath = `${moduleFolderName}/${collectionKebab}/${openApiTsFileName}.ts`;
-
-    addTemplate({
-      filename: openApiTsFilePath,
-      getContents: async () => {
-        const openApiTs = await getOpenApiTs({
-          apiConfig,
-          collectionName,
-          moduleConfig,
-          nuxt,
-        });
-
-        return astToString(openApiTs);
-      },
-      write: true,
-    });
+    const openApiTsFilePath = `types/${moduleFolderName}/${collectionKebab}/openapi.d.ts`;
 
     const pascalCasedName = pascalCase(collectionName);
     const pathsTypeName = `${pascalCasedName}Paths`;
     const componentsTypeName = `${pascalCasedName}Components`;
+    const schemasTypeName = `${pascalCasedName}Schemas`;
 
     const clientName = `$fetch${pascalCasedName}`;
     const useClientName = `use${pascalCasedName}Fetch`;
@@ -65,19 +52,44 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
       apiConfig.clients,
     );
 
+    const typesModuleName = `#${moduleFolderName}/${collectionKebab}/types`;
+
+    addTypeTemplate(
+      {
+        filename: openApiTsFilePath as `${string}.d.ts`,
+        getContents: async () => {
+          const openApiTs = await getOpenApiTs({
+            apiConfig,
+            collectionName,
+            moduleConfig,
+            nuxt,
+          });
+
+          return `declare module '${typesModuleName}' {
+  ${astToString(openApiTs)}       
+}`;
+        },
+      },
+      {
+        nitro: clientConfig.nitro !== false,
+        nuxt: clientConfig.nuxt !== false,
+      },
+    );
+
     if (clientConfig.nuxt !== false) {
       const nuxtClientPath = `${moduleFolderName}/${collectionKebab}/index.ts`;
       const { dst } = addTemplate({
         filename: nuxtClientPath,
         write: true,
         getContents: () => {
-          return `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}';
+          return `import type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from '${typesModuleName}';
 import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
 import { useFetch } from 'nuxt/app';
-import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}'
+import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}';
 import type { Ref } from 'vue'
 
-export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
+export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from '${typesModuleName}';
+export type ${schemasTypeName} = ${componentsTypeName}['schemas']
 
 ${tsIgnoreError} 
 export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
@@ -134,6 +146,16 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
             type: true,
           },
           {
+            name: componentsTypeName,
+            from: dst,
+            type: true,
+          },
+          {
+            name: schemasTypeName,
+            from: dst,
+            type: true,
+          },
+          {
             name: clientName,
             from: dst,
           },
@@ -149,47 +171,71 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
     }
 
     if (clientConfig.nitro !== false) {
-      const nitroClientPath = `${moduleFolderName}/${collectionKebab}/nitro`;
-
-      const { dst } = addTemplate({
-        filename: `${nitroClientPath}.ts`,
+      const nitroClientPath = `${moduleFolderName}/${collectionKebab}`;
+      const nitroClientModule = `#${nitroClientPath}`;
+      const nitroClientPathDts = `types/${nitroClientPath}/nitro.d.ts`;
+      addServerTemplate({
+        filename: nitroClientModule,
         getContents:
-          () => `import type { paths as ${pathsTypeName} } from './${openApiTsFileName}'
-import { handleFetchPathParams } from '${resolver.resolve('./runtime/server')}'
-import type { NitroFetch, SimplifiedNitroFetchOptions  } from '${resolver.resolve('./runtime/server')}'
+          () => `import { handleFetchPathParams } from '${resolver.resolve('./runtime/server')}'
 
-export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from './${openApiTsFileName}'
-
-${tsIgnoreError}
-export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
-  const options = (opts ?? {}) as SimplifiedNitroFetchOptions
+export const ${clientName} = (path, opts) => {
+  const options = opts ?? {}
   options.baseURL ??= "${apiConfig.baseUrl}"
 
-  let finalPath = path as string;
-  if (options.pathParams) {
-      finalPath = handleFetchPathParams(path, options.pathParams)
+  const { pathParams, ...rest } = options;
+
+  let finalPath = path;
+  if (pathParams) {
+      finalPath = handleFetchPathParams(path, pathParams)
   }
 
-  const { pathParams, ...rest } = options;
-  
-  ${tsIgnoreError}
   return $fetch(finalPath, rest)
 };`,
-        write: true,
       });
 
-      addedNitroClientsDirNames.add(collectionKebab);
+      addTypeTemplate(
+        {
+          filename: nitroClientPathDts as `${string}.d.ts`,
+          getContents: () => `
+declare module "${nitroClientModule}" {
+  import type { paths, components } from '${typesModuleName}'
+  
+  export type ${pathsTypeName} = paths;
+  export type ${componentsTypeName} = components;
+  export type ${schemasTypeName} = components['schemas']
+
+  // see: https://stackoverflow.com/a/66768386
+  export const ${clientName}: import("${resolver.resolve('./runtime/server')}").NitroFetch<${pathsTypeName}>;
+}`,
+          write: true,
+        },
+        { nitro: true, nuxt: false },
+      );
+
+      addedNitroClientsModules.add(nitroClientModule);
 
       if (clientConfig.nitro.autoImport) {
         addServerImports([
           {
             name: pathsTypeName,
-            from: dst,
+            from: nitroClientModule,
+            type: true,
+          },
+          {
+            name: componentsTypeName,
+            from: nitroClientModule,
+            type: true,
+          },
+          {
+            name: schemasTypeName,
+            from: nitroClientModule,
             type: true,
           },
           {
             name: clientName,
-            from: dst,
+            from: nitroClientModule,
+            declarationType: 'const',
           },
         ]);
       }
@@ -214,20 +260,20 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
       write: true,
     });
 
-    nuxt.options.alias ??= {};
-    nuxt.options.alias[`#${moduleFolderName}`] = path.join(
-      nuxt.options.buildDir,
-      moduleFolderName,
+    addAppAlias(
+      nuxt,
+      `#${moduleFolderName}`,
+      path.join(nuxt.options.buildDir, moduleFolderName),
     );
   }
 
-  if (addedNitroClientsDirNames.size > 0) {
-    addTemplate({
-      filename: `${moduleFolderName}/nitro.ts`,
+  if (addedNitroClientsModules.size > 0) {
+    addServerTemplate({
+      filename: `#${moduleFolderName}`,
       getContents: () => {
-        const result = addedNitroClientsDirNames
+        const result = addedNitroClientsModules
           .values()
-          .map((x) => `export * from "./${x}/nitro";`)
+          .map((x) => `export * from "${x}";`)
           .toArray();
 
         result.unshift(
@@ -236,26 +282,33 @@ export const ${clientName}: NitroFetch<${pathsTypeName}> = (path, opts) => {
 
         return result.join('\n');
       },
-      write: true,
     });
 
-    nuxt.hook('nitro:config', (nitro) => {
-      nitro.alias ??= {};
-      nitro.alias[`#${moduleFolderName}`] = path.join(
-        nuxt.options.buildDir,
-        moduleFolderName,
-        'nitro',
-      );
+    addTypeTemplate(
+      {
+        filename: `types/${moduleFolderName}/nitro.d.ts`,
+        getContents: () => {
+          const allClientExports = addedNitroClientsModules
+            .values()
+            .map((x) => `export * from "${x}";`)
+            .toArray();
 
-      for (const client of addedNitroClientsDirNames) {
-        nitro.alias[`#${moduleFolderName}/${client}`] = path.join(
-          nuxt.options.buildDir,
-          moduleFolderName,
-          client,
-          'nitro',
-        );
-      }
-    });
+          // const $fetchCustomGithub: typeof import('../../app/composables/customGithubFetch')['$fetchCustomGithub']
+          return `declare module "#${moduleFolderName}" {
+  export type {
+    NitroFetch,
+    UntypedNitroFetchOptions,
+    SimplifiedNitroFetchOptions,
+  } from '${resolver.resolve('./runtime/server')}';
+  export const handleFetchPathParams: typeof import('${resolver.resolve('./runtime/server')}')['handleFetchPathParams']
+  export const ensureArray: typeof import('${resolver.resolve('./runtime/server')}')['ensureArray']
+  ${allClientExports.join('\n')}
+}`;
+        },
+        write: true,
+      },
+      { nitro: true, nuxt: false },
+    );
   }
 };
 
@@ -333,7 +386,7 @@ const discoverOpenApiObjectFilePath = ({
         `Ambiguous open api object match: \n${JSON.stringify(findResult.map((x) => path.join(globCwdPath, x)))}`,
       );
 
-    return path.join(globCwdPath, findResult[0]);
+    return path.join(globCwdPath, findResult[0]!);
   }
 
   throw new Error(
@@ -349,4 +402,26 @@ const resolveClientConfig = (
     return toMerged(moduleConfig, apiConfig);
   }
   return moduleConfig;
+};
+
+/** only add alias to app, but not to server. this is different from `nuxt.options.alias` */
+const addAppAlias = (nuxt: Nuxt, alias: string, actual: string) => {
+  nuxt.hook('prepare:types', (options) => {
+    options.tsConfig.compilerOptions ??= {};
+    options.tsConfig.compilerOptions.paths ??= {};
+    options.tsConfig.compilerOptions.paths[alias] = [actual];
+    options.tsConfig.compilerOptions.paths[`${alias}/*`] = [`${actual}/*`];
+  });
+
+  nuxt.hook('vite:extendConfig', (config) => {
+    config.resolve ??= {};
+
+    if (Array.isArray(config.resolve.alias)) {
+      const array = config.resolve.alias as Alias[];
+      array.push({ find: alias, replacement: actual });
+    } else {
+      config.resolve.alias ??= {};
+      (config.resolve.alias as Record<string, string>)[alias] = actual;
+    }
+  });
 };
