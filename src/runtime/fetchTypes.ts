@@ -282,7 +282,7 @@ export type UseFetch<
   Response extends GetReponses<Operation>,
   ErrorT = FetchError<GetReponses<Operation, `4${string}` | `5${string}`>>,
   PickKeys extends KeysOf<Response> = KeysOf<Response>,
-  DefaultT = Response,
+  DefaultT = undefined,
 >(
   request: Ref<Path> | Path | (() => Path),
   ...opts: HasRequiredProperties<
