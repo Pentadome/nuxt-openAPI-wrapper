@@ -1,6 +1,27 @@
 # Changelog
 
 
+## v3.0.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.0...v3.0.1)
+
+### 🩹 Fixes
+
+- Change default type for UseFetch<DefaultT> to undefined ([cf31ec7](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/cf31ec7))
+- Link in readme.md ([55afec8](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/55afec8))
+
+### 💅 Refactors
+
+- Remove commented-out useFetch function for clarity ([ee97b0f](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/ee97b0f))
+
+### 🏡 Chore
+
+- **release:** V3.0.0 ([bd1f304](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/bd1f304))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v3.0.0
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v2.0.4...v3.0.0)
