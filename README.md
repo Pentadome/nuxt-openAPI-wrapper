@@ -110,7 +110,7 @@ export const $fetchGithub: typeof _$fetchGithub = (path, opts?) => {
 
 You can also create a custom Nitro fetch client. E.g. by creating a `./server/utils/githubClient.ts` file.
 
-[Nuxt composable example](playground/composables/customGithubFetch.ts)
+[Nuxt composable example](playground/app/composables/customGithubFetch.ts)
 
 [Nitro utils example](playground/server/utils/customGitlabFetch.ts)
 
