@@ -16,7 +16,6 @@ import {
   createResolver,
 } from '@nuxt/kit';
 import { kebabCase, pascalCase, toMerged } from 'es-toolkit';
-import type { Alias } from 'vite';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
@@ -302,7 +301,7 @@ declare module "${nitroClientModule}" {
   } from '${resolver.resolve('./runtime/server')}';
   export const handleFetchPathParams: typeof import('${resolver.resolve('./runtime/server')}')['handleFetchPathParams']
   export const ensureArray: typeof import('${resolver.resolve('./runtime/server')}')['ensureArray']
-  ${allClientExports.join('\n')}
+  ${allClientExports.join('\n  ')}
 }`;
         },
         write: true,
@@ -406,22 +405,12 @@ const resolveClientConfig = (
 
 /** only add alias to app, but not to server. this is different from `nuxt.options.alias` */
 const addAppAlias = (nuxt: Nuxt, alias: string, actual: string) => {
-  nuxt.hook('prepare:types', (options) => {
-    options.tsConfig.compilerOptions ??= {};
-    options.tsConfig.compilerOptions.paths ??= {};
-    options.tsConfig.compilerOptions.paths[alias] = [actual];
-    options.tsConfig.compilerOptions.paths[`${alias}/*`] = [`${actual}/*`];
-  });
-
-  nuxt.hook('vite:extendConfig', (config) => {
-    config.resolve ??= {};
-
-    if (Array.isArray(config.resolve.alias)) {
-      const array = config.resolve.alias as Alias[];
-      array.push({ find: alias, replacement: actual });
-    } else {
-      config.resolve.alias ??= {};
-      (config.resolve.alias as Record<string, string>)[alias] = actual;
+  nuxt.options.alias ??= {};
+  nuxt.options.alias[alias] = actual;
+  nuxt.hook('nitro:config', (options) => {
+    if (options.alias) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete options.alias[alias];
     }
   });
 };

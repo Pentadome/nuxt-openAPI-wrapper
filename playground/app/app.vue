@@ -25,7 +25,7 @@ const _result2 = await useGithubFetch('/advisories/{ghsa_id}', {
 });
 
 // check for type error
-const _test2: GithubComponents['schemas']['global-advisory'] | null =
+const _test2: GithubComponents['schemas']['global-advisory'] | undefined =
   _result2.data.value;
 
 const _result3 = useCustomGithubFetch('/advisories/{ghsa_id}', {
@@ -36,7 +36,7 @@ const _result3 = useCustomGithubFetch('/advisories/{ghsa_id}', {
 useLazyCustomGithubFetch('/');
 
 // check for type error
-const _test3: GithubComponents['schemas']['global-advisory'] | null =
+const _test3: GithubComponents['schemas']['global-advisory'] | undefined =
   _result3.data.value;
 
 // test auto import
