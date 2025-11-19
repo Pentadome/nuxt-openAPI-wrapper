@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v3.0.2
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.1...v3.0.2)
+
+### 🩹 Fixes
+
+- Possible conflict with import ids of nuxt and nitro clients ([6e7643e](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/6e7643e))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v3.0.1
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.0...v3.0.1)
