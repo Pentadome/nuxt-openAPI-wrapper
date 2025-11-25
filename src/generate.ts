@@ -32,7 +32,10 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
   const resolver = createResolver(import.meta.url);
 
   const addedNuxtClientsDirNames = new Set<string>();
-  const addedNitroClientsModules = new Set<string>();
+  const addedNitroClients = new Set<{
+    moduleName: string;
+    collectionName: string;
+  }>();
   for (const [collectionName, apiConfig] of apis) {
     const collectionKebab = kebabCase(collectionName);
     const openApiTsFilePath = `types/${moduleFolderName}/${collectionKebab}/openapi.d.ts`;
@@ -196,7 +199,8 @@ export const ${clientName} = (path, opts) => {
       addTypeTemplate(
         {
           filename: nitroClientPathDts as `${string}.d.ts`,
-          getContents: () => `
+          getContents: () => `/// <reference path="./openapi.d.ts" />
+
 declare module "${nitroClientModule}" {
   import type { paths, components } from '${typesModuleName}'
   
@@ -212,7 +216,10 @@ declare module "${nitroClientModule}" {
         { nitro: true, nuxt: false },
       );
 
-      addedNitroClientsModules.add(nitroClientModule);
+      addedNitroClients.add({
+        moduleName: nitroClientModule,
+        collectionName: collectionKebab,
+      });
 
       if (clientConfig.nitro.autoImport) {
         addServerImports([
@@ -266,13 +273,13 @@ declare module "${nitroClientModule}" {
     );
   }
 
-  if (addedNitroClientsModules.size > 0) {
+  if (addedNitroClients.size > 0) {
     addServerTemplate({
       filename: `#${moduleFolderName}`,
       getContents: () => {
-        const result = addedNitroClientsModules
+        const result = addedNitroClients
           .values()
-          .map((x) => `export * from "${x}";`)
+          .map((x) => `export * from "${x.moduleName}";`)
           .toArray();
 
         result.unshift(
@@ -287,18 +294,35 @@ declare module "${nitroClientModule}" {
       {
         filename: `types/${moduleFolderName}/nitro.d.ts`,
         getContents: () => {
-          const allClientExports = addedNitroClientsModules
+          const allClientReferences = addedNitroClients
             .values()
-            .map((x) => `export * from "${x}";`)
+            .map(
+              (x) =>
+                `/// <reference path="./${x.collectionName}/nitro.d.ts" />`,
+            )
+            .toArray();
+
+          const allClientExports = addedNitroClients
+            .values()
+            .map((x) => `export * from "${x.moduleName}";`)
             .toArray();
 
           // const $fetchCustomGithub: typeof import('../../app/composables/customGithubFetch')['$fetchCustomGithub']
-          return `declare module "#${moduleFolderName}" {
-  export type {
+          return `${allClientReferences.join('\n')}
+          
+declare module "#${moduleFolderName}" {
+
+  import type {
     NitroFetch,
     UntypedNitroFetchOptions,
     SimplifiedNitroFetchOptions,
   } from '${resolver.resolve('./runtime/server')}';
+
+  export type {
+    NitroFetch,
+    UntypedNitroFetchOptions,
+    SimplifiedNitroFetchOptions,
+  }
   export const handleFetchPathParams: typeof import('${resolver.resolve('./runtime/server')}')['handleFetchPathParams']
   export const ensureArray: typeof import('${resolver.resolve('./runtime/server')}')['ensureArray']
   ${allClientExports.join('\n  ')}

@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v3.0.5
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.2...v3.0.5)
+
+### 🩹 Fixes
+
+- "module augmentation" instead of "ambient module declaration" in nitro.d.ts file ([4e35051](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/4e35051))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v3.0.2
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.1...v3.0.2)
