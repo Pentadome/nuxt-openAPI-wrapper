@@ -12,6 +12,12 @@ export default defineNuxtModule<ModuleOptions>({
   },
   // Default configuration options of the Nuxt module
   defaults: {},
+  moduleDependencies: {
+    'nuxt-mcp-dev': {
+      optional: true,
+      version: '>=0.0.0',
+    },
+  },
   async setup(options, nuxt) {
     //const resolver = createResolver(import.meta.url);
 
