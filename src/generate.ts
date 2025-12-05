@@ -3,10 +3,12 @@ import type { ApiConfig, ResolvedConfig } from './config';
 import path from 'node:path';
 import { globSync } from 'node:fs';
 import assert from 'node:assert';
-import openapiTS, {
+import {
   astToString,
+  type OpenAPI3,
   type OpenAPITSOptions,
 } from 'openapi-typescript';
+import openapiTS from './lib/openapi-typescript';
 import {
   addImports,
   addServerImports,
@@ -16,6 +18,7 @@ import {
   createResolver,
 } from '@nuxt/kit';
 import { kebabCase, pascalCase, toMerged } from 'es-toolkit';
+import { recordInfoForMcp, setupMCPTools } from './mcp';
 
 type GenerateArgs = {
   moduleConfig: ResolvedConfig;
@@ -36,6 +39,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
     moduleName: string;
     collectionName: string;
   }>();
+  let usesMcp = false;
   for (const [collectionName, apiConfig] of apis) {
     const collectionKebab = kebabCase(collectionName);
     const openApiTsFilePath = `types/${moduleFolderName}/${collectionKebab}/openapi.d.ts`;
@@ -56,6 +60,10 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
 
     const typesModuleName = `#${moduleFolderName}/${collectionKebab}/types`;
 
+    const shouldSaveSchemaForMCP =
+      apiConfig.exposeToMcp ?? moduleConfig.exposeToMcp;
+
+    usesMcp ||= shouldSaveSchemaForMCP;
     addTypeTemplate(
       {
         filename: openApiTsFilePath as `${string}.d.ts`,
@@ -65,6 +73,9 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
             collectionName,
             moduleConfig,
             nuxt,
+            onSchemaCreated: shouldSaveSchemaForMCP
+              ? (schema) => recordInfoForMcp(collectionName, schema)
+              : undefined,
           });
 
           return `declare module '${typesModuleName}' {
@@ -333,6 +344,8 @@ declare module "#${moduleFolderName}" {
       { nitro: true, nuxt: false },
     );
   }
+
+  if (usesMcp) await setupMCPTools(nuxt);
 };
 
 type GetOpenApiTsConfigArgs = {
@@ -340,6 +353,7 @@ type GetOpenApiTsConfigArgs = {
   nuxt: Nuxt;
   collectionName: string;
   apiConfig: ApiConfig<false> | ApiConfig<true>;
+  onSchemaCreated?: (schema: OpenAPI3) => void;
   //redoc: RedocConfig | undefined;
 };
 
@@ -353,6 +367,7 @@ const getOpenApiTs = async ({
   collectionName,
   moduleConfig,
   nuxt,
+  onSchemaCreated,
 }: GetOpenApiTsConfigArgs) => {
   if (!apiConfig.openApi && moduleConfig.autoDiscover === false) {
     throw new Error(
@@ -368,7 +383,7 @@ const getOpenApiTs = async ({
     : { ...moduleConfig.openApiTsConfig, ...staticOpenApiTsConfig };
 
   if (apiConfig.openApi) {
-    return await openapiTS(apiConfig.openApi, openApiTsConfig);
+    return await openapiTS(apiConfig.openApi, openApiTsConfig, onSchemaCreated);
   }
 
   const openAPIFilePath = discoverOpenApiObjectFilePath({
@@ -376,7 +391,11 @@ const getOpenApiTs = async ({
     nuxt,
     collectionName,
   });
-  return await openapiTS(new URL(`file://${openAPIFilePath}`), openApiTsConfig);
+  return await openapiTS(
+    new URL(`file://${openAPIFilePath}`),
+    openApiTsConfig,
+    onSchemaCreated,
+  );
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {

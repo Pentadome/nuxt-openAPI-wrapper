@@ -22,9 +22,8 @@ export type ModuleOptions = GlobalOrSpecificOptions & {
   clients?: ClientsConfig;
 
   /**
-   * Add tool to `nuxt-mcp-dev` that can retieve the availabe endpoints and schemas.
-   * @default true // if 'nuxt-mcp-dev' is intalled
-   * @default false // if 'nuxt-mcp-dev' is not intalled
+   * Add tools to `nuxt-mcp-dev` (if installed) that can retieve the availabe endpoints and schemas.
+   * @default true
    */
   exposeToMcp?: boolean;
 } & (
@@ -115,7 +114,7 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
     clients?: ClientsConfig;
 
     /**
-     * Add tool to `nuxt-mcp-dev` that can retieve the availabe endpoints and schemas.
+     * Add tools to `nuxt-mcp-dev` (if installed) that can retieve the availabe endpoints and schemas.
      *
      * `undefined` = use module config
      * @default undefined
@@ -140,6 +139,7 @@ export const defaultConfig = {
     dirname: 'openapi',
     openApiFileName: 'openapi.{json,yaml}',
   },
+  exposeToMcp: true,
   clients: { nitro: { autoImport: true }, nuxt: { autoImport: true } },
   apis: {},
   openApiTsConfig: {

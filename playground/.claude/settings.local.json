@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__nuxt__",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-externalDocs",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-paths",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-webhooks",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-extensions",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-schemas",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-responses",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-parameters",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-examples",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-requestBodies",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-headers",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-links",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-callbacks",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-components-pathItems",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-tags",
+      "mcp__nuxt__nuxt-openAPI-wrapper__get-openAPI-schema-security"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "nuxt",
+    "nuxt-docs"
+  ]
+}
