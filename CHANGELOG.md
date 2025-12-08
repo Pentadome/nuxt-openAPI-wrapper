@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.0-rc.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.5...v3.1.0-rc.1)
+
+### 🚀 Enhancements
+
+- Alpha release mcp tool support ([f63d02e](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/f63d02e))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
 
 ## v3.0.5
 
@@ -115,11 +126,15 @@
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v1.1.1...v2.0.0)
 
 ### Breaking changes
+
 #### Removed `autoImport` property from module and api config.
+
 Use `clients: { nuxt: { autoImport: false }}` to disable auto imports instead.
 
 #### The openAPITS config of the api config now gets merged with the module config.
+
 Example:
+
 ```ts
 openAPIWrapper: {
     openApiTsConfig: { immutable: true },
@@ -129,9 +144,13 @@ openAPIWrapper: {
     },
   },
 ```
+
 #### Before 2.0.0
+
 effective config: `{ additionalProperties: true }`
+
 #### After 2.0.0
+
 effective config: `{ immutable: true, additionalProperties: true }`
 
 ### 🚀 Enhancements
@@ -141,7 +160,6 @@ effective config: `{ immutable: true, additionalProperties: true }`
 ### 🩹 Fixes
 
 - Minor mistake in readme.md ([dcaf1d8](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/dcaf1d8))
-
 
 ### ❤️ Contributors
 
@@ -331,4 +349,3 @@ effective config: `{ immutable: true, additionalProperties: true }`
 - Pentadome ([@Pentadome](https://github.com/Pentadome))
 
 ## v1.0.1
-
