@@ -1,7 +1,6 @@
 /// <reference types="nuxt-mcp-dev" />
 
 import type { Nuxt } from 'nuxt/schema';
-import type { ApiConfig, ResolvedConfig } from './config';
 import {
   resolveRef,
   type OpenAPI3,
