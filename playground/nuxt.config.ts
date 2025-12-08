@@ -1,7 +1,7 @@
 import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
-  modules: ['../dist/module'],
+  modules: ['../src/module', 'nuxt-mcp-dev'],
   openAPIWrapper: {
     apis: {
       github: {

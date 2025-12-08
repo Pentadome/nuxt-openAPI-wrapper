@@ -114,6 +114,61 @@ You can also create a custom Nitro fetch client. E.g. by creating a `./server/ut
 
 [Nitro utils example](playground/server/utils/customGitlabFetch.ts)
 
+## MCP Integration (AI Agent Support)
+
+This module integrates with [nuxt-mcp-dev](https://github.com/anthropics/nuxt-mcp-dev) to expose your OpenAPI schemas as MCP (Model Context Protocol) tools. This allows AI agents like Claude to query your API schemas during development.
+
+### Enabling MCP
+
+MCP tools are automatically enabled when `nuxt-mcp-dev` is installed. You can explicitly control this behavior:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['nuxt-openapi-wrapper', 'nuxt-mcp-dev'],
+  openAPIWrapper: {
+    // Enable/disable MCP tools for all APIs (default: true when nuxt-mcp-dev is installed)
+    exposeToMcp: true,
+    apis: {
+      github: {
+        baseUrl: 'https://api.github.com',
+        // Override at the API level
+        exposeToMcp: false,
+      },
+      gitlab: {
+        baseUrl: 'https://gitlab.com',
+        // This API will use the module-level setting (true)
+      },
+    },
+  },
+});
+```
+
+### Available MCP Tools
+
+When enabled, the following tools are registered for AI agents to query your OpenAPI schemas. All tools require `schemaName` to select which API schema to query.
+
+| Tool | Optional Parameters | Description |
+|------|---------------------|-------------|
+| `nuxt-openAPI-wrapper__get-openAPI-schema` | - | Gets the entire OpenAPI schema |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-paths` | `pathRegex`, `supportedHTTPMethods` | Gets API paths, filtered by regex and/or HTTP methods |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-webhooks` | `webhookNameRegex` | Gets webhooks, filtered by name regex |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-security` | `schemeNameRegex` | Gets security schemes and global security requirements |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-tags` | `tagNameRegex` | Gets tags, filtered by name regex |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-externalDocs` | - | Gets external documentation links |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-extensions` | `extensionNameRegex` | Gets extension fields (x-*) |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-schemas` | `schemaNameRegex` | Gets component schemas |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-responses` | `responseNameRegex` | Gets component responses |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-parameters` | `parameterNameRegex` | Gets component parameters |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-examples` | `exampleNameRegex` | Gets component examples |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-requestBodies` | `requestBodyNameRegex` | Gets component request bodies |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-headers` | `headerNameRegex` | Gets component headers |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-links` | `linkNameRegex` | Gets component links |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-callbacks` | `callbackNameRegex` | Gets component callbacks |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-pathItems` | `pathItemNameRegex` | Gets component path items |
+| `nuxt-openAPI-wrapper__write-openAPI-schema` | `overwrite` | Writes the schema to `absoluteFilePath` (required) |
+
+All regex parameters are case-insensitive. The `supportedHTTPMethods` parameter accepts an array of lowercase HTTP methods (e.g., `["get", "post"]`).
+
 ## Contribution
 
 <details>

@@ -8,6 +8,8 @@ import {
   type PathItemObject,
 } from 'openapi-typescript';
 import type { ZodLiteral } from 'zod';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 export const shouldExposeToMCP = (
   nuxt: Nuxt,
@@ -673,6 +675,39 @@ export const setupMCPTools = (nuxt: Nuxt) => {
         );
 
         return mcpToolReturn(filtered);
+      },
+    );
+
+    mcp.registerTool(
+      `${toolNamePrefix}write-openAPI-schema`,
+      {
+        title: 'Write the entire openAPI schema to a file path',
+        annotations: {
+          destructiveHint: true, // with overwrite
+          idempotentHint: false,
+          openWorldHint: false,
+          readOnlyHint: false,
+        },
+        description:
+          'Write the entire openAPI schema to a file path in json format',
+        inputSchema: z.object({
+          schemaName: zodSchemaName,
+          absoluteFilePath: z.string(),
+          overwrite: z.boolean().optional().default(false),
+        }),
+      },
+      ({ schemaName, absoluteFilePath, overwrite }) => {
+        const schema = apiInfos.get(schemaName)!;
+
+        if (overwrite) {
+          rmSync(absoluteFilePath, { force: true });
+        }
+        const schemaJson = JSON.stringify(schema, null, 2);
+        mkdirSync(dirname(absoluteFilePath), { recursive: true });
+        writeFileSync(absoluteFilePath, schemaJson, {
+          encoding: 'utf-8',
+        });
+        return { content: [] };
       },
     );
   });
