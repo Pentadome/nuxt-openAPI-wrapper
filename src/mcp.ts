@@ -11,21 +11,6 @@ import type { ZodLiteral } from 'zod';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-export const shouldExposeToMCP = (
-  nuxt: Nuxt,
-  moduleExpose: ResolvedConfig['exposeToMcp'],
-  clientExpose: ApiConfig['exposeToMcp'],
-) => {
-  const effectiveClientExpose = clientExpose ?? moduleExpose;
-
-  if (effectiveClientExpose !== undefined) return effectiveClientExpose;
-
-  return nuxt.options.modules.some(
-    (x) =>
-      x === 'nuxt-mcp-dev' || (Array.isArray(x) && x[0] === 'nuxt-mcp-dev'),
-  );
-};
-
 const apiInfos = new Map<string, OpenAPI3>();
 
 export const recordInfoForMcp = (collectionName: string, openAPI: OpenAPI3) => {
