@@ -116,7 +116,7 @@ You can also create a custom Nitro fetch client. E.g. by creating a `./server/ut
 
 ## MCP Integration (AI Agent Support)
 
-This module integrates with [nuxt-mcp-dev](https://github.com/anthropics/nuxt-mcp-dev) to expose your OpenAPI schemas as MCP (Model Context Protocol) tools. This allows AI agents like Claude to query your API schemas during development.
+This module integrates with [nuxt-mcp-dev](https://github.com/antfu/nuxt-mcp-dev) to expose your OpenAPI schemas as MCP (Model Context Protocol) tools. This allows AI agents like Claude to query your API schemas during development.
 
 ### Enabling MCP
 
