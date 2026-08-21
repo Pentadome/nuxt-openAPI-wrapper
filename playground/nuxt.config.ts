@@ -11,7 +11,7 @@ export default defineNuxtConfig({
       gitlab: {
         baseUrl: 'https://gitlab.com',
         openApi:
-          'https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/openapi/openapi.yaml?inline=false',
+          'https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/openapi/openapi_v3.yaml',
         clients: { nitro: { autoImport: false } },
       },
     },

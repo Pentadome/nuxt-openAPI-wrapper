@@ -1,4 +1,6 @@
-export default defineEventHandler(() => {
+export default defineEventHandler(async () => {
   // auto import from ../utils/customGitlabFetch.ts
-  return $fetchGitlab('/version');
+  const x = await $fetchGitlab('/api/v4/version');
+
+  return x;
 });

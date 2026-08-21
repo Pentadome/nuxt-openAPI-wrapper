@@ -220,7 +220,7 @@ declare module "${nitroClientModule}" {
   export type ${schemasTypeName} = components['schemas']
 
   // see: https://stackoverflow.com/a/66768386
-  export const ${clientName}: import("${resolver.resolve('./runtime/server')}").NitroFetch<${pathsTypeName}>;
+  export const ${clientName}: import("#${moduleFolderName}").NitroFetch<${pathsTypeName}>;
 }`,
           write: true,
         },
@@ -285,6 +285,14 @@ declare module "${nitroClientModule}" {
   }
 
   if (addedNitroClients.size > 0) {
+    const runtimeServerPath = resolver.resolve('./runtime/server');
+    const runtimeServerImportPath = path
+      .relative(
+        path.join(nuxt.options.buildDir, 'types', moduleFolderName),
+        runtimeServerPath,
+      )
+      .replaceAll(path.sep, '/');
+
     addServerTemplate({
       filename: `#${moduleFolderName}`,
       getContents: () => {
@@ -323,19 +331,11 @@ declare module "${nitroClientModule}" {
           
 declare module "#${moduleFolderName}" {
 
-  import type {
-    NitroFetch,
-    UntypedNitroFetchOptions,
-    SimplifiedNitroFetchOptions,
-  } from '${resolver.resolve('./runtime/server')}';
-
-  export type {
-    NitroFetch,
-    UntypedNitroFetchOptions,
-    SimplifiedNitroFetchOptions,
-  }
-  export const handleFetchPathParams: typeof import('${resolver.resolve('./runtime/server')}')['handleFetchPathParams']
-  export const ensureArray: typeof import('${resolver.resolve('./runtime/server')}')['ensureArray']
+  export type NitroFetch<Paths extends Record<string, any>> = import('${runtimeServerImportPath}').NitroFetch<Paths>;
+  export type UntypedNitroFetchOptions = import('${runtimeServerImportPath}').UntypedNitroFetchOptions;
+  export type SimplifiedNitroFetchOptions = import('${runtimeServerImportPath}').SimplifiedNitroFetchOptions;
+  export const handleFetchPathParams: typeof import('${runtimeServerImportPath}')['handleFetchPathParams']
+  export const ensureArray: typeof import('${runtimeServerImportPath}')['ensureArray']
   ${allClientExports.join('\n  ')}
 }`;
         },

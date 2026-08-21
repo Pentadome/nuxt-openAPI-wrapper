@@ -40,12 +40,12 @@ const _test3: GithubComponents['schemas']['global-advisory'] | undefined =
   _result3.data.value;
 
 // test auto import
-const _result4 = await $fetchGitlab('/avatar', {
+const _result4 = await $fetchGitlab('/api/v4/avatar', {
   params: {
     email: 'test@test.com',
   },
 });
 
 // check for type error
-const _test4: GitlabComponents['schemas']['API_Entities_Avatar'] = _result4;
+const _test4: GitlabComponents['schemas']['APIEntitiesAvatar'] = _result4;
 </script>
