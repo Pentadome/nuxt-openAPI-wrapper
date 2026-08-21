@@ -1,4 +1,4 @@
-// source: https://github.com/openapi-ts/openapi-typescript/blob/12f9c29b7653db3ab5d6beb4ac698ce5b58177aa/packages/openapi-typescript/src/index.ts#L63
+// source: https://github.com/openapi-ts/openapi-typescript/blob/0cc7ee77d28359c7901d9cd3b5733b70a050ea49/packages/openapi-typescript/src/index.ts
 // edit: add onSchemaCreated parameter.
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { performance } from 'node:perf_hooks';
@@ -94,12 +94,14 @@ export default async function openapiTS(
     emptyObjectsUnknown: options.emptyObjectsUnknown ?? false,
     enum: options.enum ?? false,
     enumValues: options.enumValues ?? false,
+    conditionalEnums: options.conditionalEnums ?? false,
     dedupeEnums: options.dedupeEnums ?? false,
     excludeDeprecated: options.excludeDeprecated ?? false,
     exportType: options.exportType ?? false,
     immutable: options.immutable ?? false,
     rootTypes: options.rootTypes ?? false,
     rootTypesNoSchemaPrefix: options.rootTypesNoSchemaPrefix ?? false,
+    rootTypesKeepCasing: options.rootTypesKeepCasing ?? false,
     injectFooter: [],
     pathParamsAsTypes: options.pathParamsAsTypes ?? false,
     postTransform:
@@ -112,15 +114,13 @@ export default async function openapiTS(
     inject: options.inject ?? undefined,
     transform:
       typeof options.transform === 'function' ? options.transform : undefined,
-    // @ts-expect-error
     transformProperty:
-      // @ts-expect-error
       typeof options.transformProperty === 'function'
-        ? // @ts-expect-error
-          options.transformProperty
+        ? options.transformProperty
         : undefined,
     makePathsEnum: options.makePathsEnum ?? false,
     generatePathParams: options.generatePathParams ?? false,
+    readWriteMarkers: options.readWriteMarkers ?? false,
     resolve($ref) {
       return resolveRef(schema, $ref, { silent: options.silent ?? false });
     },

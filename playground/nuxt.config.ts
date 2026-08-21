@@ -1,6 +1,7 @@
 import { defineNuxtConfig } from 'nuxt/config';
 
 export default defineNuxtConfig({
+  compatibilityDate: '2026-08-22',
   modules: ['../src/module', 'nuxt-mcp-dev'],
   openAPIWrapper: {
     apis: {
@@ -17,4 +18,5 @@ export default defineNuxtConfig({
     },
   },
   devtools: { enabled: true },
+  mcp: {},
 });

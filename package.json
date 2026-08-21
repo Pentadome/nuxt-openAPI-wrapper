@@ -35,31 +35,37 @@
     "test:types": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.1.0",
-    "defu": "^6.1.4",
-    "es-toolkit": "^1.39.10",
-    "openapi-typescript": "^7.9.1"
+    "@nuxt/kit": "^4.5.2",
+    "defu": "^6.1.7",
+    "es-toolkit": "^1.51.0",
+    "openapi-typescript": "7.13.0"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^2.6.3",
-    "@nuxt/eslint-config": "^1.9.0",
-    "@nuxt/module-builder": "^1.0.2",
-    "@nuxt/schema": "^4.1.0",
-    "@nuxt/test-utils": "^3.19.2",
+    "@nuxt/devtools": "^3.4.1",
+    "@nuxt/eslint-config": "^1.17.0",
+    "@nuxt/module-builder": "^1.0.3",
+    "@nuxt/schema": "^4.5.2",
+    "@nuxt/test-utils": "^4.1.0",
     "@types/node": "latest",
     "changelogen": "^0.6.2",
-    "eslint": "^9.34.0",
-    "nuxt": "^4.1.0",
-    "prettier": "^3.6.2",
-    "typescript": "~5.9.2",
-    "vitest": "^3.2.4",
-    "vue-tsc": "^3.0.6"
+    "eslint": "^10.9.0",
+    "nuxt": "^4.5.2",
+    "nuxt-mcp-dev": "^0.3.2",
+    "prettier": "^3.9.6",
+    "typescript": "^5.x",
+    "vitest": "^4.1.11",
+    "vue-tsc": "^3.3.11",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "nuxt-mcp-dev": ">=0.0.0"
+    "nuxt-mcp-dev": ">=0.0.0",
+    "zod": "^3.25.76 || ^4.0.0"
   },
   "peerDependenciesMeta": {
     "nuxt-mcp-dev": {
+      "optional": true
+    },
+    "zod": {
       "optional": true
     }
   }

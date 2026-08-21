@@ -19,4 +19,13 @@
   ],
   "editor.inlineSuggest.showToolbar": "always",
   "editor.gotoLocation.multipleDefinitions": "goto",
+  "chat.mcp.serverSampling": {
+    "nuxt-openapi-wrapper/.vscode/mcp.json: nuxt-mcp-dev": {
+      "allowedModels": [
+        "copilotcli/auto",
+        "copilot/auto",
+        "agent-host-copilotcli:auto"
+      ]
+    }
+  },
 }
