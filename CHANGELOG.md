@@ -1,5 +1,21 @@
 # Changelog
 
+## v3.1.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.1.0...v3.1.1)
+
+### 💅 Refactors
+
+- Update API endpoints and improve type handling in fetch functions ([b71777c](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/b71777c))
+
+### 🏡 Chore
+
+- Updated dependencies ([49a48dc](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/49a48dc))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v3.1.0-rc.1
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.0.5...v3.1.0-rc.1)
