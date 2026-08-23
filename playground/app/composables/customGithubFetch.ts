@@ -5,7 +5,6 @@ import {
   ensureArrayComputed,
   useGithubFetch,
   useLazyGithubFetch,
-  type ComputedUntypedFetchOptions,
   type SimplifiedFetchOptions,
   type SimplifiedUseFetchOptions,
 } from '#openapi-wrapper';
@@ -43,7 +42,7 @@ export const useLazyCustomGithubFetch: typeof useLazyGithubFetch = (
 };
 
 const configureUseFetchOptions = <
-  T extends ComputedUntypedFetchOptions | undefined,
+  T extends SimplifiedUseFetchOptions | undefined,
 >(
   opts: T,
 ) => {

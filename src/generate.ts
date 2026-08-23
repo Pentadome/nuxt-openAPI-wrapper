@@ -93,14 +93,31 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
 
     if (clientConfig.nuxt !== false) {
       const nuxtClientPath = `${moduleFolderName}/${collectionKebab}/index.ts`;
+      const nuxtClientDirectory = path.join(
+        nuxt.options.buildDir,
+        moduleFolderName,
+        collectionKebab,
+      );
+      const mainModuleIndexPath = getRelativeImportPath(
+        path.relative(
+          nuxtClientDirectory,
+          path.join(nuxt.options.buildDir, moduleFolderName),
+        ),
+      );
+      const runtimeHandlePathParamsImportPath = getRelativeImportPath(
+        path.relative(
+          nuxtClientDirectory,
+          resolver.resolve('./runtime/handlePathParams'),
+        ),
+      );
       const { dst } = addTemplate({
         filename: nuxtClientPath,
         write: true,
         getContents: () => {
           return `import type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from '${typesModuleName}';
-import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${resolver.resolve('./runtime/fetchTypes')}';
+import type { Fetch, UseFetch, UseLazyFetch, SimplifiedFetchOptions, SimplifiedUseFetchOptions } from '${mainModuleIndexPath}';
 import { useFetch } from 'nuxt/app';
-import { handleFetchPathParams, handleUseFetchPathParams } from '${resolver.resolve('./runtime/handlePathParams')}';
+import { handleFetchPathParams, handleUseFetchPathParams } from '${runtimeHandlePathParamsImportPath}';
 import type { Ref } from 'vue'
 
 export type { paths as ${pathsTypeName}, components as ${componentsTypeName} } from '${typesModuleName}';
@@ -189,6 +206,22 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
       const nitroClientPath = `${moduleFolderName}/${collectionKebab}`;
       const nitroClientModule = `#${nitroClientPath}`;
       const nitroClientPathDts = `types/${nitroClientPath}/nitro.d.ts`;
+      const nitroModuleTypeImportPath = getRelativeImportPath(
+        path.relative(
+          path.join(
+            nuxt.options.buildDir,
+            'types',
+            moduleFolderName,
+            collectionKebab,
+          ),
+          path.join(
+            nuxt.options.buildDir,
+            'types',
+            moduleFolderName,
+            'nitro.d.ts',
+          ),
+        ),
+      );
       addServerTemplate({
         filename: nitroClientModule,
         getContents:
@@ -213,6 +246,7 @@ export const ${clientName} = (path, opts) => {
         {
           filename: nitroClientPathDts as `${string}.d.ts`,
           getContents: () => `/// <reference path="./openapi.d.ts" />
+/// <reference path="${nitroModuleTypeImportPath}" />
 
 declare module "${nitroClientModule}" {
   import type { paths, components } from '${typesModuleName}'
@@ -262,6 +296,19 @@ declare module "${nitroClientModule}" {
   }
 
   if (addedNuxtClientsDirNames.size > 0) {
+    const runtimeFetchTypesImportPath = getRelativeImportPath(
+      path.relative(
+        path.join(nuxt.options.buildDir, moduleFolderName),
+        resolver.resolve('./runtime/fetchTypes'),
+      ),
+    );
+    const runtimeFetchUtilsImportPath = getRelativeImportPath(
+      path.relative(
+        path.join(nuxt.options.buildDir, moduleFolderName),
+        resolver.resolve('./runtime/fetchUtils'),
+      ),
+    );
+
     addTemplate({
       filename: `${moduleFolderName}/index.ts`,
       getContents: () => {
@@ -271,7 +318,7 @@ declare module "${nitroClientModule}" {
           .toArray();
 
         result.unshift(
-          `export type * from "${resolver.resolve('./runtime/fetchTypes')}";\nexport * from "${resolver.resolve('./runtime/fetchUtils')}"`,
+          `export type * from "${runtimeFetchTypesImportPath}";\nexport * from "${runtimeFetchUtilsImportPath}"`,
         );
 
         return result.join('\n');
@@ -458,4 +505,11 @@ const addAppAlias = (nuxt: Nuxt, alias: string, actual: string) => {
       delete options.alias[alias];
     }
   });
+};
+
+const getRelativeImportPath = (relativePath: string) => {
+  const normalizedPath = relativePath.replaceAll(path.sep, '/');
+  return normalizedPath.startsWith('.')
+    ? normalizedPath
+    : `./${normalizedPath}`;
 };

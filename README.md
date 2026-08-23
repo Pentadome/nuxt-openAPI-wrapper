@@ -147,25 +147,25 @@ export default defineNuxtConfig({
 
 When enabled, the following tools are registered for AI agents to query your OpenAPI schemas. All tools require `schemaName` to select which API schema to query.
 
-| Tool | Optional Parameters | Description |
-|------|---------------------|-------------|
-| `nuxt-openAPI-wrapper__get-openAPI-schema` | - | Gets the entire OpenAPI schema |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-paths` | `pathRegex`, `supportedHTTPMethods` | Gets API paths, filtered by regex and/or HTTP methods |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-webhooks` | `webhookNameRegex` | Gets webhooks, filtered by name regex |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-security` | `schemeNameRegex` | Gets security schemes and global security requirements |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-tags` | `tagNameRegex` | Gets tags, filtered by name regex |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-externalDocs` | - | Gets external documentation links |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-extensions` | `extensionNameRegex` | Gets extension fields (x-*) |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-schemas` | `schemaNameRegex` | Gets component schemas |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-responses` | `responseNameRegex` | Gets component responses |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-parameters` | `parameterNameRegex` | Gets component parameters |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-examples` | `exampleNameRegex` | Gets component examples |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-requestBodies` | `requestBodyNameRegex` | Gets component request bodies |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-headers` | `headerNameRegex` | Gets component headers |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-links` | `linkNameRegex` | Gets component links |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-callbacks` | `callbackNameRegex` | Gets component callbacks |
-| `nuxt-openAPI-wrapper__get-openAPI-schema-components-pathItems` | `pathItemNameRegex` | Gets component path items |
-| `nuxt-openAPI-wrapper__write-openAPI-schema` | `overwrite` | Writes the schema to `absoluteFilePath` (required) |
+| Tool                                                                | Optional Parameters                 | Description                                            |
+| ------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------ |
+| `nuxt-openAPI-wrapper__get-openAPI-schema`                          | -                                   | Gets the entire OpenAPI schema                         |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-paths`                    | `pathRegex`, `supportedHTTPMethods` | Gets API paths, filtered by regex and/or HTTP methods  |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-webhooks`                 | `webhookNameRegex`                  | Gets webhooks, filtered by name regex                  |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-security`                 | `schemeNameRegex`                   | Gets security schemes and global security requirements |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-tags`                     | `tagNameRegex`                      | Gets tags, filtered by name regex                      |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-externalDocs`             | -                                   | Gets external documentation links                      |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-extensions`               | `extensionNameRegex`                | Gets extension fields (x-*)                            |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-schemas`       | `schemaNameRegex`                   | Gets component schemas                                 |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-responses`     | `responseNameRegex`                 | Gets component responses                               |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-parameters`    | `parameterNameRegex`                | Gets component parameters                              |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-examples`      | `exampleNameRegex`                  | Gets component examples                                |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-requestBodies` | `requestBodyNameRegex`              | Gets component request bodies                          |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-headers`       | `headerNameRegex`                   | Gets component headers                                 |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-links`         | `linkNameRegex`                     | Gets component links                                   |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-callbacks`     | `callbackNameRegex`                 | Gets component callbacks                               |
+| `nuxt-openAPI-wrapper__get-openAPI-schema-components-pathItems`     | `pathItemNameRegex`                 | Gets component path items                              |
+| `nuxt-openAPI-wrapper__write-openAPI-schema`                        | `overwrite`                         | Writes the schema to `absoluteFilePath` (required)     |
 
 All regex parameters are case-insensitive. The `supportedHTTPMethods` parameter accepts an array of lowercase HTTP methods (e.g., `["get", "post"]`).
 
@@ -173,30 +173,30 @@ All regex parameters are case-insensitive. The `supportedHTTPMethods` parameter 
 
 <details>
   <summary>Local development</summary>
-  
-  ```bash
-  # Install dependencies
-  npm install
-  
-  # Generate type stubs
-  npm run dev:prepare
-  
-  # Develop with the playground
-  npm run dev
-  
-  # Build the playground
-  npm run dev:build
-  
-  # Run ESLint
-  npm run lint
-  
-  # Run Vitest
-  npm run test
-  npm run test:watch
-  
-  # Release new version
-  npm run release
-  ```
+
+```bash
+# Install dependencies
+npm install
+
+# Generate type stubs
+npm run dev:prepare
+
+# Develop with the playground
+npm run dev
+
+# Build the playground
+npm run dev:build
+
+# Run ESLint
+npm run lint
+
+# Run Vitest
+npm run test
+npm run test:watch
+
+# Release new version
+npm run release
+```
 
 </details>
 

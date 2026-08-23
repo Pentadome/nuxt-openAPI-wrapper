@@ -22,11 +22,7 @@ export type { FetchOptions } from 'ofetch';
 export type { ComputedOptions } from './typeUtils';
 
 type UntypedOptionsToReplaceWithTypedOptions =
-  | 'body'
-  | 'method'
-  | 'params'
-  | 'query'
-  | 'headers';
+  'body' | 'method' | 'params' | 'query' | 'headers';
 
 export type UntypedFetchOptions = OmitStrict<
   FetchOptions,
@@ -125,9 +121,8 @@ type GetQueryParams<Operation> = Operation extends {
   };
 }
   ? HasRequiredProperties<Operation['parameters']['query']> extends true
-    ?
-        | { params: Operation['parameters']['query'] & PlainObject }
-        | { query: Operation['parameters']['query'] & PlainObject }
+    ? | { params: Operation['parameters']['query'] & PlainObject }
+      | { query: Operation['parameters']['query'] & PlainObject }
     : {
         params?: (Operation['parameters']['query'] & PlainObject) | PlainObject;
         query?: (Operation['parameters']['query'] & PlainObject) | PlainObject;
@@ -143,8 +138,7 @@ type GetHeaders<Operation> = Operation extends {
     ? { headers: Operation['parameters']['header'] & PlainObject }
     : {
         headers?:
-          | (Operation['parameters']['header'] & PlainObject)
-          | PlainObject;
+          (Operation['parameters']['header'] & PlainObject) | PlainObject;
       }
   : { headers?: PlainObject };
 
@@ -167,11 +161,11 @@ export type Fetch<Paths extends Record<string, any>> = <
   // credit to nuxt-open-fetch for the complex method generics.
   MethodOptions extends GetSupportedHttpMethods<PathInfo>,
   MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
-  Method extends Lowercase<MethodLiteral> extends MethodOptions
+  Method extends (Lowercase<MethodLiteral> extends MethodOptions
     ? Lowercase<MethodLiteral>
-    : MethodOptions,
+    : MethodOptions),
   // use get when method is not specified
-  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  ResolvedMethod extends ('get' extends Method ? 'get' : Method),
   Operation extends PathInfo[ResolvedMethod],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
@@ -217,11 +211,11 @@ export type NitroFetch<Paths extends Record<string, any>> = <
   // credit to nuxt-open-fetch for the complex method generics.
   MethodOptions extends GetSupportedHttpMethods<PathInfo>,
   MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
-  Method extends Lowercase<MethodLiteral> extends MethodOptions
+  Method extends (Lowercase<MethodLiteral> extends MethodOptions
     ? Lowercase<MethodLiteral>
-    : MethodOptions,
+    : MethodOptions),
   // use get when method is not specified
-  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  ResolvedMethod extends ('get' extends Method ? 'get' : Method),
   Operation extends PathInfo[ResolvedMethod],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
@@ -255,7 +249,14 @@ export type NitroFetch<Paths extends Record<string, any>> = <
       ]
 ) => Promise<Response>;
 
-export type SimplifiedUseFetchOptions = UseFetchOptions<any> & {
+export type SimplifiedUseFetchOptions = UseFetchOptions<
+  any,
+  any,
+  any,
+  any,
+  any,
+  any
+> & {
   pathParams?: MaybeRef<ComputedOptions<Record<string, string | number>>>;
 };
 
@@ -268,11 +269,11 @@ export type UseFetch<
   // credit to nuxt-open-fetch for the complex method generics.
   MethodOptions extends GetSupportedHttpMethods<PathInfo>,
   MethodLiteral extends MethodOptions | Uppercase<MethodOptions>,
-  Method extends Lowercase<MethodLiteral> extends MethodOptions
+  Method extends (Lowercase<MethodLiteral> extends MethodOptions
     ? Lowercase<MethodLiteral>
-    : MethodOptions,
+    : MethodOptions),
   // use get when method is not specified
-  ResolvedMethod extends 'get' extends Method ? 'get' : Method,
+  ResolvedMethod extends ('get' extends Method ? 'get' : Method),
   Operation extends PathInfo[ResolvedMethod],
   Body extends GetBody<Operation>,
   PathParams extends GetPathParams<Operation>,
