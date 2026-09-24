@@ -23,7 +23,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     const resolvedConfig = applyConfig(options);
 
-    generate({ moduleConfig: resolvedConfig, nuxt });
+    await generate({ moduleConfig: resolvedConfig, nuxt });
 
     // // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     // addPlugin(resolver.resolve('./runtime/plugin'));

@@ -30,7 +30,8 @@ export const handleUseFetchPathParams = (
 
 const handlePathString = (pathString: string, pathParams: PathParams) => {
   for (const [key, value] of Object.entries(pathParams)) {
-    pathString = pathString.replace(`{${key}}`, `${value}`);
+    // a replacer function keeps `$&`-style patterns in values literal.
+    pathString = pathString.replaceAll(`{${key}}`, () => `${value}`);
   }
   return pathString;
 };

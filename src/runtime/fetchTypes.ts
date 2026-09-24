@@ -151,6 +151,15 @@ type GetMethodProp<Methods, Method> = 'get' extends Methods
       method: Method;
     };
 
+/** Like `ComputedOptions<GetMethodProp<...>>`, but without a conditional type, so TypeScript can still infer `Method`. */
+type GetComputedMethodProp<Methods, Method> = 'get' extends Methods
+  ? {
+      method?: Method | Ref<Method>;
+    }
+  : {
+      method: Method | Ref<Method>;
+    };
+
 export type SimplifiedFetchOptions = FetchOptions & {
   pathParams?: Record<string, string | number>;
 };
@@ -281,7 +290,7 @@ export type UseFetch<
   Headers extends GetHeaders<Operation>,
   Response extends GetReponses<Operation>,
   ErrorT = FetchError<GetReponses<Operation, `4${string}` | `5${string}`>>,
-  PickKeys extends KeysOf<Response> = KeysOf<Response>,
+  const PickKeys extends KeysOf<Response> = KeysOf<Response>,
   DefaultT = undefined,
 >(
   request: Ref<Path> | Path | (() => Path),
@@ -304,7 +313,7 @@ export type UseFetch<
           ComputedOptions<Query> &
           ComputedOptions<PathParams> &
           ComputedOptions<Body> &
-          ComputedOptions<GetMethodProp<MethodOptions, MethodLiteral>>,
+          GetComputedMethodProp<MethodOptions, MethodLiteral>,
       ]
     : [
         opts?: UntypedUseLazyFetchOptions<
@@ -318,7 +327,7 @@ export type UseFetch<
           ComputedOptions<Query> &
           ComputedOptions<PathParams> &
           ComputedOptions<Body> &
-          ComputedOptions<GetMethodProp<MethodOptions, MethodLiteral>>,
+          GetComputedMethodProp<MethodOptions, MethodLiteral>,
       ]
 ) => AsyncData<PickFrom<Response, PickKeys> | DefaultT, ErrorT | undefined>;
 

@@ -145,7 +145,8 @@ export type ${schemasTypeName} = ${componentsTypeName}['schemas']
 
 ${tsIgnoreError} 
 export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
-  const options = (opts ?? {}) as SimplifiedFetchOptions
+  // copy, so the caller's options object is never mutated.
+  const options = { ...opts } as SimplifiedFetchOptions
   options.baseURL ??= "${apiConfig.baseUrl}"
 
   let finalPath = path as string
@@ -161,7 +162,7 @@ export const ${clientName}: Fetch<${pathsTypeName}> = (path, opts?) => {
 
 ${tsIgnoreError} 
 export const ${useClientName}: UseFetch<${pathsTypeName}> =  (path, opts?) => {
-  const options = (opts ?? {}) as SimplifiedUseFetchOptions;
+  const options = { ...opts } as SimplifiedUseFetchOptions;
   options.baseURL ??= "${apiConfig.baseUrl}"
 
   let finalPath = path as string | Ref<string> | (() => string)
@@ -177,9 +178,7 @@ export const ${useClientName}: UseFetch<${pathsTypeName}> =  (path, opts?) => {
 
 ${tsIgnoreError}
 export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?) => {
-  const options = (opts ?? {}) as SimplifiedUseFetchOptions;
-
-  options.lazy = true;
+  const options = { ...opts, lazy: true } as SimplifiedUseFetchOptions;
 
   ${tsIgnoreError}
   return ${useClientName}(path, options);
@@ -248,7 +247,7 @@ export const ${useLazyClientName}: UseLazyFetch<${pathsTypeName}> = (path, opts?
           () => `import { handleFetchPathParams } from '${resolver.resolve('./runtime/server')}'
 
 export const ${clientName} = (path, opts) => {
-  const options = opts ?? {}
+  const options = { ...opts }
   options.baseURL ??= "${apiConfig.baseUrl}"
 
   const { pathParams, ...rest } = options;
@@ -576,7 +575,8 @@ const addAppAlias = (nuxt: Nuxt, alias: string, actual: string) => {
 
 const getRelativeImportPath = (relativePath: string) => {
   const normalizedPath = relativePath.replaceAll(path.sep, '/');
-  return normalizedPath.startsWith('.')
+  // `path.relative` returns an absolute path when both paths are on different drives (Windows).
+  return normalizedPath.startsWith('.') || path.isAbsolute(relativePath)
     ? normalizedPath
     : `./${normalizedPath}`;
 };
