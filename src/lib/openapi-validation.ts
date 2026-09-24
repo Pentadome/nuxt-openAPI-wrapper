@@ -9,8 +9,7 @@ import {
   type Document,
   type NormalizedProblem,
 } from '@redocly/openapi-core';
-import { error, warn } from 'openapi-typescript/src/lib/utils.ts';
-import type { OpenAPI3 } from 'openapi-typescript/src/types.ts';
+import { error, warn, type OpenAPI3 } from 'openapi-typescript';
 
 export class OpenApiSourceLoadError extends Error {
   constructor(readonly loadErrors: Error[]) {
