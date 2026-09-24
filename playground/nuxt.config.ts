@@ -16,6 +16,7 @@ export default defineNuxtConfig({
         clients: { nitro: { autoImport: false } },
       },
     },
+    openApiTsCache: {},
   },
   devtools: { enabled: true },
   mcp: {},

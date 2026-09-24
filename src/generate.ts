@@ -25,6 +25,7 @@ import {
   addTemplate,
   addTypeTemplate,
   createResolver,
+  useLogger,
 } from '@nuxt/kit';
 import { kebabCase, pascalCase, toMerged } from 'es-toolkit';
 import { recordInfoForMcp, setupMCPTools } from './mcp';
@@ -35,6 +36,8 @@ type GenerateArgs = {
 };
 
 const moduleFolderName = 'openapi-wrapper';
+
+const logger = useLogger('nuxt-openapi-wrapper');
 
 // prevent ide errors when using ts-expect-error is string template.
 const tsIgnoreError = '//' + ' @ts-ignore-error';
@@ -77,15 +80,25 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
       {
         filename: openApiTsFilePath as `${string}.d.ts`,
         getContents: async () => {
-          const openApiTs = await getOpenApiTs({
-            apiConfig,
-            collectionName,
-            moduleConfig,
-            nuxt,
-            onSchemaCreated: shouldSaveSchemaForMCP
-              ? (schema) => recordInfoForMcp(collectionName, schema)
-              : undefined,
-          });
+          let openApiTs: string;
+          try {
+            openApiTs = await getOpenApiTs({
+              apiConfig,
+              collectionName,
+              moduleConfig,
+              nuxt,
+              onSchemaCreated: shouldSaveSchemaForMCP
+                ? (schema) => recordInfoForMcp(collectionName, schema)
+                : undefined,
+            });
+          } catch (error) {
+            // Nuxt only reports a generic template error, so surface the cause here.
+            logger.error(
+              `Failed to generate OpenAPI types for "${collectionName}":`,
+              error,
+            );
+            throw error;
+          }
 
           return `declare module '${typesModuleName}' {
   ${openApiTs}
@@ -474,7 +487,8 @@ export const getOpenApiTs = async ({
   );
 
   if (!cacheOptions) {
-    return (await generate(source, openApiTsConfig, onSchemaCreated)).declaration;
+    return (await generate(source, openApiTsConfig, onSchemaCreated))
+      .declaration;
   }
 
   const cacheRoot = path.resolve(

@@ -15,8 +15,7 @@ vi.mock('../src/lib/openapi-typescript', () => ({
     sources: unknown[],
     options: unknown,
     onSchemaCreated?: (schema: OpenAPI3) => void,
-  ) =>
-    openapiTSMock(sources[0], options, onSchemaCreated),
+  ) => openapiTSMock(sources[0], options, onSchemaCreated),
 }));
 
 const tempDirectories: string[] = [];
@@ -24,15 +23,17 @@ const tempDirectories: string[] = [];
 afterEach(async () => {
   vi.clearAllMocks();
   await Promise.all(
-    tempDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
+    tempDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { recursive: true, force: true })),
   );
 });
 
 describe('generation cache integration', () => {
   it('skips openapi-typescript on a cache hit and replays MCP schema callback', async () => {
-    const rootDir = await mkdtemp(path.join(tmpdir(), 'openapi-cache-integration-'));
+    const rootDir = await mkdtemp(
+      path.join(tmpdir(), 'openapi-cache-integration-'),
+    );
     tempDirectories.push(rootDir);
     const schema = {
       openapi: '3.1.0',
