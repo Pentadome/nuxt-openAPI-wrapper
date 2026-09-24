@@ -1,5 +1,33 @@
 # Changelog
 
+## v4.0.0
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.1.2...v4.0.0)
+
+### 🚀 Enhancements
+
+- Add OpenAPI source fallbacks ([c0e6124](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/c0e6124))
+- Cache OpenAPI TypeScript generation ([d93a1c7](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/d93a1c7))
+
+### 🩹 Fixes
+
+- Keep OpenAPI type checks within public API ([0b29728](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/0b29728))
+- Surface OpenAPI type generation errors ([524fbfd](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/524fbfd))
+- Correct client runtime and typing bugs found by new tests ([bb73aee](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/bb73aee))
+
+### 🏡 Chore
+
+- **release:** V3.1.2 ([85ef306](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/85ef306))
+- Update dependencies ([21974da](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/21974da))
+
+### ✅ Tests
+
+- Add comprehensive test suite with coverage thresholds ([b038b41](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/b038b41))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v3.1.2
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v3.1.1...v3.1.2)
