@@ -463,22 +463,22 @@ export const getOpenApiTs = async ({
         ),
       ];
 
-  // Cache identity currently tracks one source and its transitive references.
-  // Preserve fallback behavior for source lists, but bypass cache for those APIs.
-  if (sources.length > 1) {
-    return astToString(
-      await openapiTSWithFallback(sources, openApiTsConfig, onSchemaCreated),
-    );
-  }
-
+  // Cache identity tracks the first source and its transitive references.
+  // Output generated from a fallback source is returned but never cached.
   const source = sources[0]!;
   const generate = async (
     openApiSource: OpenApiSource,
     options: OpenAPITSOptions,
     onSchema?: (schema: OpenAPI3) => void,
   ) => {
-    const ast = await openapiTSWithFallback([openApiSource], options, onSchema);
-    return { declaration: astToString(ast) };
+    let usedSourceIndex = 0;
+    const ast = await openapiTSWithFallback(
+      [openApiSource, ...sources.slice(1)],
+      options,
+      onSchema,
+      (index) => (usedSourceIndex = index),
+    );
+    return { declaration: astToString(ast), cacheable: usedSourceIndex === 0 };
   };
   const cacheOptions = resolveOpenApiTsCacheOptions(
     moduleConfig.openApiTsCache,

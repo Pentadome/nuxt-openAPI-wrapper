@@ -32,6 +32,8 @@ type SourceIdentity = {
 type GenerateResult = {
   declaration: string;
   schema?: OpenAPI3;
+  /** Set to false when the output did not come from `source` (e.g. a fallback was used). */
+  cacheable?: boolean;
 };
 
 type Generate = (
@@ -146,7 +148,7 @@ export const getCachedOpenApiGeneration = async ({
       declaration: generated.declaration,
       schema: generated.schema ?? schema,
     };
-    await writeCache(cacheFilePath, record);
+    if (generated.cacheable !== false) await writeCache(cacheFilePath, record);
     return record;
   })();
 
@@ -171,7 +173,8 @@ export const resolveOpenApiTsCacheOptions = (
 
   const moduleOptions =
     moduleOption && typeof moduleOption === 'object' ? moduleOption : {};
-  const apiOptions = apiOption && typeof apiOption === 'object' ? apiOption : {};
+  const apiOptions =
+    apiOption && typeof apiOption === 'object' ? apiOption : {};
   return { ...moduleOptions, ...apiOptions };
 };
 
@@ -207,7 +210,9 @@ export const canonicalize = (
           canonicalize(key, state, ancestors),
           canonicalize(entry, state, ancestors),
         ])
-        .sort((a, b) => JSON.stringify(a[0]).localeCompare(JSON.stringify(b[0]))),
+        .sort((a, b) =>
+          JSON.stringify(a[0]).localeCompare(JSON.stringify(b[0])),
+        ),
     };
   } else if (value instanceof Set) {
     canonical = {
@@ -277,7 +282,8 @@ const collectSourceIdentities = async (
         const locator = normalizeHttpLocator(
           input instanceof URL ? input.href : String(input),
         );
-        if (locator) etags.set(locator, response.headers.get('etag') ?? undefined);
+        if (locator)
+          etags.set(locator, response.headers.get('etag') ?? undefined);
         return response;
       },
     },
@@ -329,7 +335,9 @@ const collectSourceIdentities = async (
     }
   }
 
-  return [...sources.values()].sort((a, b) => a.locator.localeCompare(b.locator));
+  return [...sources.values()].sort((a, b) =>
+    a.locator.localeCompare(b.locator),
+  );
 };
 
 const findExternalReferences = (document: unknown): string[] => {
@@ -390,7 +398,11 @@ const getAbsoluteRef = (
     return cwd.protocol === 'file:' ? fileURLToPath(cwd) : cwd.href;
   }
   return path.resolve(
-    typeof cwd === 'string' ? cwd : Buffer.isBuffer(cwd) ? cwd.toString() : process.cwd(),
+    typeof cwd === 'string'
+      ? cwd
+      : Buffer.isBuffer(cwd)
+        ? cwd.toString()
+        : process.cwd(),
   );
 };
 
@@ -452,7 +464,10 @@ const getPackageVersion = (packageName: string): string => {
   throw new Error(`Cannot read package version for ${packageName}`);
 };
 
-const warnAboutFunctions = (collectionName: string, version?: string | number) => {
+const warnAboutFunctions = (
+  collectionName: string,
+  version?: string | number,
+) => {
   if (warnedCollections.has(collectionName)) return;
   warnedCollections.add(collectionName);
   const versionHint =

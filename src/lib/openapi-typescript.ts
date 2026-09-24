@@ -31,15 +31,21 @@ export const openapiTSWithFallback = async (
   sources: readonly OpenApiSource[],
   options: OpenAPITSOptions,
   onSchemaCreated?: (schema: OpenAPI3) => void,
+  onSourceUsed?: (index: number) => void,
 ): Promise<ts.Node[]> => {
   if (sources.length === 0) {
     throw new Error('At least one OpenAPI source must be provided');
   }
 
-  const failures: Array<{ source: OpenApiSource; error: OpenApiSourceLoadError }> = [];
-  for (const source of sources) {
+  const failures: Array<{
+    source: OpenApiSource;
+    error: OpenApiSourceLoadError;
+  }> = [];
+  for (const [index, source] of sources.entries()) {
     try {
-      return await openapiTS(source, options, onSchemaCreated);
+      const result = await openapiTS(source, options, onSchemaCreated);
+      onSourceUsed?.(index);
+      return result;
     } catch (sourceError) {
       if (!(sourceError instanceof OpenApiSourceLoadError)) throw sourceError;
       if (sources.length === 1) throw sourceError.loadErrors[0]!;
@@ -49,7 +55,10 @@ export const openapiTSWithFallback = async (
 
   const describeSource = (source: OpenApiSource) => {
     if (source instanceof URL) return source.href;
-    if (typeof source === 'string' && /^(?:https?:\/\/|file:\/\/)/.test(source)) {
+    if (
+      typeof source === 'string' &&
+      /^(?:https?:\/\/|file:\/\/)/.test(source)
+    ) {
       return source;
     }
     return '[inline OpenAPI document]';

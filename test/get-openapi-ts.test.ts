@@ -261,7 +261,7 @@ describe('getOpenApiTs', () => {
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(1);
     });
 
-    it('bypasses the cache for multiple sources', async () => {
+    it('caches output generated from the first of multiple sources', async () => {
       const rootDir = await makeTempDirectory();
       const args = {
         rootDir,
@@ -270,6 +270,33 @@ describe('getOpenApiTs', () => {
       };
       await run(args);
       await run(args);
+
+      expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(1);
+      expect(lastCall().sources).toEqual([minimalYaml, minimalYaml]);
+      expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(true);
+    });
+
+    it('does not cache output generated from a fallback source', async () => {
+      openapiTSWithFallbackMock.mockImplementation(
+        async (_sources, _options, _onSchemaCreated, onSourceUsed) => {
+          onSourceUsed?.(1);
+          return [typeAlias('Generated')];
+        },
+      );
+      const rootDir = await makeTempDirectory();
+      const args = {
+        rootDir,
+        moduleOptions: { openApiTsCache: true },
+        apiConfig: { openApi: [minimalYaml, minimalYaml] as const },
+      };
+      try {
+        await run(args);
+        await run(args);
+      } finally {
+        openapiTSWithFallbackMock.mockImplementation(async () => [
+          typeAlias('Generated'),
+        ]);
+      }
 
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(2);
       expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(false);

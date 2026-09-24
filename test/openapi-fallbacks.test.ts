@@ -1,10 +1,13 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { applyConfig } from '../src/config';
+import { applyConfig, type ApiConfig } from '../src/config';
+import { getOpenApiTs } from '../src/generate';
 import { openapiTSWithFallback } from '../src/lib/openapi-typescript';
+import { createFakeNuxt } from './helpers/fake-nuxt';
 
 const validDocument = `
 openapi: 3.0.0
@@ -178,6 +181,56 @@ paths: {}
     expect(failure.message).toContain(
       '- Source 2 ([inline OpenAPI document]):',
     );
+  });
+
+  describe('with generation cache', () => {
+    const generateCached = (rootDir: string, sources: URL[]) =>
+      getOpenApiTs({
+        moduleConfig: applyConfig({ openApiTsCache: true, apis: {} }),
+        apiConfig: {
+          baseUrl: 'https://example.test',
+          openApi: sources,
+        } as ApiConfig,
+        collectionName: 'fallback',
+        nuxt: createFakeNuxt({ rootDir }),
+      });
+    const cacheFile = (rootDir: string) =>
+      path.join(
+        rootDir,
+        'node_modules',
+        '.cache',
+        'nuxt-openAPI-wrapper',
+        'fallback',
+        'cache.json',
+      );
+
+    it('caches the first source', async () => {
+      const directory = await makeTempDirectory();
+      const primaryPath = path.join(directory, 'primary.yaml');
+      await writeFile(primaryPath, validDocument);
+
+      const generated = await generateCached(directory, [
+        pathToFileURL(primaryPath),
+        pathToFileURL(path.join(directory, 'missing.yaml')),
+      ]);
+
+      expect(generated).toContain('getHealth');
+      expect(existsSync(cacheFile(directory))).toBe(true);
+    });
+
+    it('falls back without caching when the first source cannot be loaded', async () => {
+      const directory = await makeTempDirectory();
+      const fallbackPath = path.join(directory, 'fallback.yaml');
+      await writeFile(fallbackPath, validDocument);
+
+      const generated = await generateCached(directory, [
+        pathToFileURL(path.join(directory, 'missing.yaml')),
+        pathToFileURL(fallbackPath),
+      ]);
+
+      expect(generated).toContain('getHealth');
+      expect(existsSync(cacheFile(directory))).toBe(false);
+    });
   });
 
   it('rejects an empty source list', async () => {
