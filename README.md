@@ -44,6 +44,7 @@ export default defineNuxtConfig({
       gitlab: {
         baseUrl: 'https://gitlab.com',
         // explicit openAPI document.
+        // also supports array. Tries fetching documents in order of array.
         openApi:
           'https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/openapi/openapi.yaml?inline=false',
       },
@@ -51,54 +52,6 @@ export default defineNuxtConfig({
   },
 });
 ```
-
-For resilient remote documents, configure an ordered source array. Existing single-source `openApi` values remain supported:
-
-```ts
-openApi: [
-  'https://api.example.com/openapi.yaml',
-  'https://backup.example.com/openapi.yaml',
-],
-```
-
-Sources are tried in order. Next source is used only when loading the document or one of its external `$ref` files fails. YAML parsing, OpenAPI validation, and type-generation errors stop immediately. If every source fails to load, the error lists each attempted source and its cause. Omitting `openApi` keeps existing auto-discovery behavior.
-
-## Caching generated OpenAPI types
-
-Caching is disabled by default. Enable it for all APIs, then override or disable it per API:
-
-```ts
-export default defineNuxtConfig({
-  openAPIWrapper: {
-    openApiTsCache: {
-      // Root directory; client-specific subdirectory is added automatically.
-      directory: 'node_modules/.cache/nuxt-openAPI-wrapper',
-      // Optional extra invalidation token. Bump when custom function behavior changes.
-      version: 'team-api-v1',
-    },
-    apis: {
-      github: {
-        baseUrl: 'https://api.github.com',
-        openApiTsCache: {
-          version: 2,
-          // Suppress warning if openApiTsConfig contains function values.
-          suppressFunctionWarning: true,
-        },
-      },
-      gitlab: {
-        baseUrl: 'https://gitlab.com',
-        openApiTsCache: false,
-      },
-    },
-  },
-});
-```
-
-Set `openApiTsCache: true` to use defaults. A per-API object inherits module settings and overrides selected fields; per-API `false` disables caching. Relative `directory` values resolve from Nuxt `rootDir`; the API name is appended so each client gets its own latest cache record. Default directory is `node_modules/.cache/nuxt-openAPI-wrapper`.
-
-Cache keys include this library, `openapi-typescript`, TypeScript, and Redocly versions; optional `version`; resolved `openApiTsConfig` values; and root plus transitive `$ref` document identities. Function-valued config entries are omitted from the key. A warning explains this when caching is enabled; bump `version` whenever function behavior changes, or set `suppressFunctionWarning: true` to silence it.
-
-Local and inline documents use content hashes. HTTP documents use response ETags when present, otherwise content hashes. Cache hits skip `openapi-typescript` generation, but source freshness still needs to be checked, so remote documents may still be fetched. When MCP schema exposure is enabled, cache record also stores bundled schema for MCP tools. Cache files can therefore contain generated API declarations and schema data; keep this in mind when overriding `directory` to a git-tracked path. Default path sits under ignored `node_modules`. APIs configured with multiple fallback sources bypass generation caching.
 
 That's it! You can now use Nuxt OpenAPI wrapper in your Nuxt app ✨
 
@@ -161,6 +114,43 @@ You can also create a custom Nitro fetch client. E.g. by creating a `./server/ut
 [Nuxt composable example](playground/app/composables/customGithubFetch.ts)
 
 [Nitro utils example](playground/server/utils/customGitlabFetch.ts)
+
+## Caching generated OpenAPI types
+
+Caching is disabled by default. Enable it for all APIs, then override or disable it per API:
+
+```ts
+export default defineNuxtConfig({
+  openAPIWrapper: {
+    openApiTsCache: {
+      // Root directory; client-specific subdirectory is added automatically.
+      directory: 'node_modules/.cache/nuxt-openAPI-wrapper',
+      // Optional extra invalidation token. Bump when custom function behavior changes.
+      version: 'team-api-v1',
+    },
+    apis: {
+      github: {
+        baseUrl: 'https://api.github.com',
+        openApiTsCache: {
+          version: 2,
+          // Suppress warning if openApiTsConfig contains function values.
+          suppressFunctionWarning: true,
+        },
+      },
+      gitlab: {
+        baseUrl: 'https://gitlab.com',
+        openApiTsCache: false,
+      },
+    },
+  },
+});
+```
+
+Set `openApiTsCache: true` to use defaults. A per-API object inherits module settings and overrides selected fields; per-API `false` disables caching. Relative `directory` values resolve from Nuxt `rootDir`; the API name is appended so each client gets its own latest cache record. Default directory is `node_modules/.cache/nuxt-openAPI-wrapper`.
+
+Cache keys include this library, `openapi-typescript`, TypeScript, and Redocly versions; optional `version`; resolved `openApiTsConfig` values; and root plus transitive `$ref` document identities. Function-valued config entries are omitted from the key. A warning explains this when caching is enabled; bump `version` whenever function behavior changes, or set `suppressFunctionWarning: true` to silence it.
+
+Local and inline documents use content hashes. HTTP documents use response ETags when present, otherwise content hashes. Cache hits skip `openapi-typescript` generation, but source freshness still needs to be checked, so remote documents may still be fetched. When MCP schema exposure is enabled, cache record also stores bundled schema for MCP tools. Cache files can therefore contain generated API declarations and schema data; keep this in mind when overriding `directory` to a git-tracked path. Default path sits under ignored `node_modules`. APIs configured with multiple fallback sources bypass generation caching.
 
 ## MCP Integration (AI Agent Support)
 
