@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: With external ref
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '200':
+          description: things
+          content:
+            application/json:
+              schema:
+                $ref: './schemas.yaml#/Thing'

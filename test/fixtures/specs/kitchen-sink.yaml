@@ -1,0 +1,95 @@
+# Exercises every openapi-typescript option at least once. Used by the option parity tests.
+openapi: 3.1.0
+info:
+  title: Kitchen sink
+  version: 1.0.0
+paths:
+  /zebras/{zebraId}:
+    parameters:
+      - name: zebraId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getZebra
+      responses:
+        '200':
+          description: zebra
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Zebra'
+    delete:
+      operationId: deleteZebra
+      deprecated: true
+      responses:
+        '204':
+          description: deleted
+  # path param without a declared parameter, for `generatePathParams`
+  /orphans/{orphanId}:
+    get:
+      operationId: getOrphan
+      responses:
+        '204':
+          description: nothing
+  /apples:
+    get:
+      operationId: listApples
+      parameters:
+        - name: color
+          in: query
+          schema:
+            $ref: '#/components/schemas/Color'
+      responses:
+        '200':
+          description: apples
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                maxItems: 3
+                items:
+                  $ref: '#/components/schemas/apple_item'
+components:
+  schemas:
+    Zebra:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          readOnly: true
+        secret:
+          type: string
+          writeOnly: true
+        stripes:
+          type: integer
+          default: 10
+        color:
+          $ref: '#/components/schemas/Color'
+        shade:
+          type: string
+          enum: [light, dark]
+        oldField:
+          type: string
+          deprecated: true
+        metadata:
+          type: object
+        extras:
+          type: object
+          properties:
+            note:
+              type: string
+    Color:
+      type: string
+      enum: [red, green, blue]
+    Tint:
+      type: string
+      enum: [red, green, blue]
+    apple_item:
+      type: object
+      properties:
+        kind:
+          type: string

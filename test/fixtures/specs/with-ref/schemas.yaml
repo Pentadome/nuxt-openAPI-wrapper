@@ -1,0 +1,6 @@
+Thing:
+  type: object
+  required: [thingId]
+  properties:
+    thingId:
+      type: string

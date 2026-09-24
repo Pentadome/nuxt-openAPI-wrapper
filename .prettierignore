@@ -2,3 +2,6 @@
 .*
 
 node_modules
+
+# generated, compared byte for byte by test/generated-types.test.ts
+test/types/petstore.ts

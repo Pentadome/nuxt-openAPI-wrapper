@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - run: npm i -g --force corepack@latest && corepack enable
 
@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - run: npm i -g --force corepack@latest && corepack enable
 
@@ -45,5 +45,11 @@ jobs:
       - name: Playground prepare
         run: npm run dev:prepare
 
-      - name: Test
-        run: npm run test
+      - name: Unit and type tests (with coverage thresholds)
+        run: npm run test:coverage
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Type check
+        run: npm run test:types

@@ -238,9 +238,19 @@ npm run dev:build
 # Run ESLint
 npm run lint
 
-# Run Vitest
+# Run Vitest (unit, type and e2e tests)
 npm run test
 npm run test:watch
+
+# Unit and type tests with coverage thresholds / e2e tests only
+npm run test:coverage
+npm run test:e2e
+
+# Type check the module and the playground
+npm run test:types
+
+# Regenerate the type test fixture after an openapi-typescript upgrade
+UPDATE_FIXTURES=1 npx vitest run test/generated-types.test.ts
 
 # Release new version
 npm run release

@@ -1,10 +1,9 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyConfig } from '../src/config';
-import { discoverOpenApiObjectFilePath } from '../src/generate';
 import { openapiTSWithFallback } from '../src/lib/openapi-typescript';
 
 const validDocument = `
@@ -142,7 +141,9 @@ paths: {}
   it('reports all source failures when no candidate can be loaded', async () => {
     const directory = await makeTempDirectory();
     const firstPath = pathToFileURL(path.join(directory, 'missing-first.yaml'));
-    const secondPath = pathToFileURL(path.join(directory, 'missing-second.yaml'));
+    const secondPath = pathToFileURL(
+      path.join(directory, 'missing-second.yaml'),
+    );
 
     let failure: unknown;
     try {
@@ -157,19 +158,32 @@ paths: {}
     expect((failure as AggregateError).errors).toHaveLength(2);
   });
 
-  it('preserves auto-discovery lookup behavior', async () => {
+  it('describes string URLs verbatim and inline documents generically', async () => {
     const directory = await makeTempDirectory();
-    const documentPath = path.join(directory, 'openapi', 'catalog', 'openapi.yaml');
-    await mkdir(path.dirname(documentPath), { recursive: true });
-    await writeFile(documentPath, validDocument);
+    const missingHref = pathToFileURL(
+      path.join(directory, 'missing.yaml'),
+    ).href;
+    const inlineWithMissingRef = validDocument.replace(
+      'paths:',
+      "paths:\n  /other:\n    $ref: './does-not-exist.yaml'",
+    );
 
-    const discoveredPath = discoverOpenApiObjectFilePath({
-      moduleConfig: applyConfig({ apis: {} }),
-      nuxt: { options: { _layers: [{ cwd: directory }] } } as never,
-      collectionName: 'catalog',
-    });
+    const failure = await openapiTSWithFallback(
+      [missingHref, inlineWithMissingRef],
+      { cwd: pathToFileURL(path.join(directory, 'inline.yaml')) },
+    ).catch((error) => error);
 
-    expect(discoveredPath).toBe(documentPath);
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect(failure.message).toContain(`- Source 1 (${missingHref}):`);
+    expect(failure.message).toContain(
+      '- Source 2 ([inline OpenAPI document]):',
+    );
+  });
+
+  it('rejects an empty source list', async () => {
+    await expect(openapiTSWithFallback([], {})).rejects.toThrow(
+      'At least one OpenAPI source must be provided',
+    );
   });
 
   it('rejects an empty source array with a clear config error', () => {

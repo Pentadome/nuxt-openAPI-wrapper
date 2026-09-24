@@ -1,7 +1,4 @@
-import { createServer } from 'node:http';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { once } from 'node:events';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Readable } from 'node:stream';
@@ -12,29 +9,24 @@ import {
   getCachedOpenApiGeneration,
   resolveOpenApiTsCacheOptions,
 } from '../src/lib/openapi-cache';
+import { useTempDirectories } from './helpers/temp-dir';
+import { useHttpServers } from './helpers/http-server';
 
-const tempDirectories: string[] = [];
-const closeServers: Array<() => Promise<void>> = [];
+const makeTemp = useTempDirectories();
+const makeTempDirectory = () => makeTemp('openapi-cache-test-');
+const startServer = useHttpServers();
 
-const makeTempDirectory = async () => {
-  const directory = await mkdtemp(path.join(tmpdir(), 'openapi-cache-test-'));
-  tempDirectories.push(directory);
-  return directory;
-};
-
-const makeCachedGeneration = (
-  options: {
-    source?: string | URL | OpenAPI3 | Buffer | Readable;
-    keyOptions?: OpenAPITSOptions;
-    version?: string | number;
-    onSchemaCreated?: (schema: OpenAPI3) => void;
-    generate: (
-      source: string | URL | OpenAPI3 | Buffer | Readable,
-      options: OpenAPITSOptions,
-      onSchemaCreated?: (schema: OpenAPI3) => void,
-    ) => Promise<{ declaration: string; schema?: OpenAPI3 }>;
-  },
-) =>
+const makeCachedGeneration = (options: {
+  source?: string | URL | OpenAPI3 | Buffer | Readable;
+  keyOptions?: OpenAPITSOptions;
+  version?: string | number;
+  onSchemaCreated?: (schema: OpenAPI3) => void;
+  generate: (
+    source: string | URL | OpenAPI3 | Buffer | Readable,
+    options: OpenAPITSOptions,
+    onSchemaCreated?: (schema: OpenAPI3) => void,
+  ) => Promise<{ declaration: string; schema?: OpenAPI3 }>;
+}) =>
   getCachedOpenApiGeneration({
     source: options.source ?? {
       openapi: '3.1.0',
@@ -43,11 +35,7 @@ const makeCachedGeneration = (
     },
     options: options.keyOptions ?? {},
     keyOptions: options.keyOptions ?? {},
-    cacheFilePath: path.join(
-      testCacheDirectory,
-      'fixture',
-      'cache.json',
-    ),
+    cacheFilePath: path.join(testCacheDirectory, 'fixture', 'cache.json'),
     version: options.version,
     collectionName: `cache-test-${Math.random()}`,
     onSchemaCreated: options.onSchemaCreated,
@@ -56,20 +44,16 @@ const makeCachedGeneration = (
 
 let testCacheDirectory = '';
 
-afterEach(async () => {
+afterEach(() => {
   vi.restoreAllMocks();
-  await Promise.all(closeServers.splice(0).map((close) => close()));
-  await Promise.all(
-    tempDirectories.splice(0).map((directory) =>
-      rm(directory, { recursive: true, force: true }),
-    ),
-  );
 });
 
 describe('openapi generation cache', () => {
   it('uses same generated declaration on a matching key without rerunning generator', async () => {
     testCacheDirectory = await makeTempDirectory();
-    const generate = vi.fn(async () => ({ declaration: 'export type Cached = true;' }));
+    const generate = vi.fn(async () => ({
+      declaration: 'export type Cached = true;',
+    }));
     const source = {
       openapi: '3.1.0',
       info: { title: 'Cache fixture', version: '1.0.0' },
@@ -86,7 +70,9 @@ describe('openapi generation cache', () => {
 
   it('invalidates for config and custom version changes', async () => {
     testCacheDirectory = await makeTempDirectory();
-    const generate = vi.fn(async () => ({ declaration: `generation-${generate.mock.calls.length}` }));
+    const generate = vi.fn(async () => ({
+      declaration: `generation-${generate.mock.calls.length}`,
+    }));
 
     await makeCachedGeneration({
       keyOptions: { alphabetize: true },
@@ -108,7 +94,9 @@ describe('openapi generation cache', () => {
   it('omits function identity from keys, warns with custom-version guidance, and supports suppression', async () => {
     testCacheDirectory = await makeTempDirectory();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    const generate = vi.fn(async () => ({ declaration: 'export type Fn = true;' }));
+    const generate = vi.fn(async () => ({
+      declaration: 'export type Fn = true;',
+    }));
     const source = {
       openapi: '3.1.0',
       info: { title: 'Cache fixture', version: '1.0.0' },
@@ -132,9 +120,7 @@ describe('openapi generation cache', () => {
 
     expect(generate).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]?.[0])).toContain(
-      'openApiTsCache.version',
-    );
+    expect(String(warn.mock.calls[0]?.[0])).toContain('openApiTsCache.version');
     expect(String(warn.mock.calls[0]?.[0])).toContain(
       'suppressFunctionWarning: true',
     );
@@ -163,10 +149,16 @@ describe('openapi generation cache', () => {
 
   it('treats malformed cache records and unwritable cache locations as misses', async () => {
     testCacheDirectory = await makeTempDirectory();
-    const cacheFilePath = path.join(testCacheDirectory, 'corrupt', 'cache.json');
+    const cacheFilePath = path.join(
+      testCacheDirectory,
+      'corrupt',
+      'cache.json',
+    );
     await mkdir(path.dirname(cacheFilePath), { recursive: true });
     await writeFile(cacheFilePath, 'not-json');
-    const generate = vi.fn(async () => ({ declaration: 'export type Recovered = true;' }));
+    const generate = vi.fn(async () => ({
+      declaration: 'export type Recovered = true;',
+    }));
 
     await expect(
       getCachedOpenApiGeneration({
@@ -210,7 +202,9 @@ describe('openapi generation cache', () => {
     testCacheDirectory = await makeTempDirectory();
     let generatorSource: unknown;
     await makeCachedGeneration({
-      source: Readable.from(['openapi: 3.1.0\ninfo: {title: stream, version: 1}\npaths: {}\n']),
+      source: Readable.from([
+        'openapi: 3.1.0\ninfo: {title: stream, version: 1}\npaths: {}\n',
+      ]),
       generate: async (source) => {
         generatorSource = source;
         return { declaration: 'export type Stream = true;' };
@@ -225,7 +219,7 @@ describe('openapi generation cache', () => {
     testCacheDirectory = await makeTempDirectory();
     let rootVersion = 1;
     let nestedVersion = 1;
-    const server = createServer((request, response) => {
+    const server = await startServer((request, response) => {
       const route = request.url;
       if (route === '/root.json') {
         response.setHeader('etag', `"root-v${rootVersion}"`);
@@ -267,15 +261,10 @@ describe('openapi generation cache', () => {
         response.end('missing');
       }
     });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
-    closeServers.push(
-      () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())),
-    );
-    const address = server.address();
-    if (!address || typeof address === 'string') throw new Error('No HTTP test address');
-    const source = new URL(`http://127.0.0.1:${address.port}/root.json`);
-    const generate = vi.fn(async () => ({ declaration: 'export type Remote = true;' }));
+    const source = server.url('/root.json');
+    const generate = vi.fn(async () => ({
+      declaration: 'export type Remote = true;',
+    }));
 
     await getCachedOpenApiGeneration({
       source,
@@ -310,7 +299,7 @@ describe('openapi generation cache', () => {
   it('hashes HTTP document content when no ETag is present', async () => {
     testCacheDirectory = await makeTempDirectory();
     let title = 'First';
-    const server = createServer((_request, response) => {
+    const server = await startServer((_request, response) => {
       response.setHeader('content-type', 'application/json');
       response.end(
         JSON.stringify({
@@ -320,15 +309,10 @@ describe('openapi generation cache', () => {
         }),
       );
     });
-    server.listen(0, '127.0.0.1');
-    await once(server, 'listening');
-    closeServers.push(
-      () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())),
-    );
-    const address = server.address();
-    if (!address || typeof address === 'string') throw new Error('No HTTP test address');
-    const source = new URL(`http://127.0.0.1:${address.port}/root.json`);
-    const generate = vi.fn(async () => ({ declaration: 'export type NoEtag = true;' }));
+    const source = server.url('/root.json');
+    const generate = vi.fn(async () => ({
+      declaration: 'export type NoEtag = true;',
+    }));
 
     await getCachedOpenApiGeneration({
       source,
@@ -367,7 +351,9 @@ describe('openapi generation cache', () => {
     );
     await writeFile(childPath, JSON.stringify({ get: { responses: {} } }));
     const source = pathToFileURL(rootPath);
-    const generate = vi.fn(async () => ({ declaration: 'export type Local = true;' }));
+    const generate = vi.fn(async () => ({
+      declaration: 'export type Local = true;',
+    }));
 
     await getCachedOpenApiGeneration({
       source,
@@ -377,7 +363,10 @@ describe('openapi generation cache', () => {
       collectionName: 'local-reference-test',
       generate,
     });
-    await writeFile(childPath, JSON.stringify({ get: { responses: { '200': {} } } }));
+    await writeFile(
+      childPath,
+      JSON.stringify({ get: { responses: { '200': {} } } }),
+    );
     await getCachedOpenApiGeneration({
       source,
       options: {},
@@ -388,11 +377,14 @@ describe('openapi generation cache', () => {
     });
 
     expect(generate).toHaveBeenCalledTimes(2);
-    await writeFile(rootPath, JSON.stringify({
-      openapi: '3.1.0',
-      info: { title: 'Updated local root', version: '1.0.0' },
-      paths: { '/pets': { $ref: './child.json' } },
-    }));
+    await writeFile(
+      rootPath,
+      JSON.stringify({
+        openapi: '3.1.0',
+        info: { title: 'Updated local root', version: '1.0.0' },
+        paths: { '/pets': { $ref: './child.json' } },
+      }),
+    );
     await getCachedOpenApiGeneration({
       source,
       options: {},

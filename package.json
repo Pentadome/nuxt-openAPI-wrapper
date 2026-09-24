@@ -32,6 +32,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
+    "test:coverage": "vitest run --project unit --coverage",
+    "test:e2e": "vitest run --project e2e",
     "test:types": "node scripts/check-types.mjs"
   },
   "dependencies": {
@@ -47,6 +49,7 @@
     "@nuxt/schema": "^4.5.2",
     "@nuxt/test-utils": "^4.3.2",
     "@types/node": "latest",
+    "@vitest/coverage-v8": "^5.0.1",
     "changelogen": "^0.6.2",
     "eslint": "^10.11.0",
     "nuxt": "^4.5.2",
