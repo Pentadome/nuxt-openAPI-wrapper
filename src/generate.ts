@@ -15,6 +15,10 @@ import {
   type OpenApiSource,
 } from './lib/openapi-typescript';
 import {
+  getCachedOpenApiGeneration,
+  resolveOpenApiTsCacheOptions,
+} from './lib/openapi-cache';
+import {
   addImports,
   addServerImports,
   addServerTemplate,
@@ -84,7 +88,7 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
           });
 
           return `declare module '${typesModuleName}' {
-  ${astToString(openApiTs)}       
+  ${openApiTs}
 }`;
         },
       },
@@ -406,7 +410,6 @@ type GetOpenApiTsConfigArgs = {
   collectionName: string;
   apiConfig: ApiConfig<false> | ApiConfig<true>;
   onSchemaCreated?: (schema: OpenAPI3) => void;
-  //redoc: RedocConfig | undefined;
 };
 
 const staticOpenApiTsConfig = {
@@ -414,7 +417,7 @@ const staticOpenApiTsConfig = {
   pathParamsAsTypes: false,
 } as const satisfies OpenAPITSOptions;
 
-const getOpenApiTs = async ({
+export const getOpenApiTs = async ({
   apiConfig,
   collectionName,
   moduleConfig,
@@ -434,27 +437,67 @@ const getOpenApiTs = async ({
       }
     : { ...moduleConfig.openApiTsConfig, ...staticOpenApiTsConfig };
 
-  if (apiConfig.openApi) {
-    const sources: readonly OpenApiSource[] = Array.isArray(apiConfig.openApi)
+  const sources: readonly OpenApiSource[] = apiConfig.openApi
+    ? Array.isArray(apiConfig.openApi)
       ? (apiConfig.openApi as readonly OpenApiSource[])
-      : [apiConfig.openApi as OpenApiSource];
-    return await openapiTSWithFallback(
-      sources,
-      openApiTsConfig,
-      onSchemaCreated,
+      : [apiConfig.openApi as OpenApiSource]
+    : [
+        new URL(
+          `file://${discoverOpenApiObjectFilePath({
+            moduleConfig,
+            nuxt,
+            collectionName,
+          })}`,
+        ),
+      ];
+
+  // Cache identity currently tracks one source and its transitive references.
+  // Preserve fallback behavior for source lists, but bypass cache for those APIs.
+  if (sources.length > 1) {
+    return astToString(
+      await openapiTSWithFallback(sources, openApiTsConfig, onSchemaCreated),
     );
   }
 
-  const openAPIFilePath = discoverOpenApiObjectFilePath({
-    moduleConfig,
-    nuxt,
-    collectionName,
-  });
-  return await openapiTSWithFallback(
-    [new URL(`file://${openAPIFilePath}`)],
-    openApiTsConfig,
-    onSchemaCreated,
+  const source = sources[0]!;
+  const generate = async (
+    openApiSource: OpenApiSource,
+    options: OpenAPITSOptions,
+    onSchema?: (schema: OpenAPI3) => void,
+  ) => {
+    const ast = await openapiTSWithFallback([openApiSource], options, onSchema);
+    return { declaration: astToString(ast) };
+  };
+  const cacheOptions = resolveOpenApiTsCacheOptions(
+    moduleConfig.openApiTsCache,
+    apiConfig.openApiTsCache,
   );
+
+  if (!cacheOptions) {
+    return (await generate(source, openApiTsConfig, onSchemaCreated)).declaration;
+  }
+
+  const cacheRoot = path.resolve(
+    nuxt.options.rootDir,
+    cacheOptions.directory ?? 'node_modules/.cache/nuxt-openAPI-wrapper',
+  );
+  const cacheFilePath = path.join(
+    cacheRoot,
+    kebabCase(collectionName),
+    'cache.json',
+  );
+
+  return await getCachedOpenApiGeneration({
+    source,
+    options: openApiTsConfig,
+    keyOptions: openApiTsConfig,
+    cacheFilePath,
+    version: cacheOptions.version,
+    suppressFunctionWarning: cacheOptions.suppressFunctionWarning,
+    collectionName,
+    onSchemaCreated,
+    generate,
+  });
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {

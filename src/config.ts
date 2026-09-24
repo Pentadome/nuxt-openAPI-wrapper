@@ -87,7 +87,27 @@ type ClientsConfig = {
   nuxt?: false | ClientConfig;
 };
 
+export type OpenApiTsCacheConfig = {
+  /**
+   * Root directory for cached generated clients. Relative paths resolve from Nuxt root.
+   * The client name is appended to keep entries isolated.
+   */
+  directory?: string;
+  /** Bump when behavior in a config function changes. */
+  version?: string | number;
+  /** Suppress warning that function-valued generator options are excluded from the cache key. */
+  suppressFunctionWarning?: boolean;
+};
+
 export type GlobalOrSpecificOptions = {
+  /**
+   * Cache generated OpenAPI TypeScript output. Omitted or false disables caching;
+   * true enables it with defaults; an object enables it and configures options.
+   * Module-level settings are defaults for each API; per-API settings override them.
+   * @default false
+   */
+  openApiTsCache?: boolean | OpenApiTsCacheConfig;
+
   /**
    * The [openapi-ts config]{@link https://openapi-ts.dev/cli#flags} to pass to the generator
    * @default { generatePathParams: true, pathParamsAsTypes: false, alphabetize: true, } */
@@ -147,6 +167,7 @@ export const defaultConfig = {
     openApiFileName: 'openapi.{json,yaml}',
   },
   exposeToMcp: true,
+  openApiTsCache: false,
   clients: { nitro: { autoImport: true }, nuxt: { autoImport: true } },
   apis: {},
   openApiTsConfig: {
