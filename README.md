@@ -52,6 +52,17 @@ export default defineNuxtConfig({
 });
 ```
 
+For resilient remote documents, configure an ordered source array. Existing single-source `openApi` values remain supported:
+
+```ts
+openApi: [
+  'https://api.example.com/openapi.yaml',
+  'https://backup.example.com/openapi.yaml',
+],
+```
+
+Sources are tried in order. Next source is used only when loading the document or one of its external `$ref` files fails. YAML parsing, OpenAPI validation, and type-generation errors stop immediately. If every source fails to load, the error lists each attempted source and its cause. Omitting `openApi` keeps existing auto-discovery behavior.
+
 That's it! You can now use Nuxt OpenAPI wrapper in your Nuxt app ✨
 
 ```ts

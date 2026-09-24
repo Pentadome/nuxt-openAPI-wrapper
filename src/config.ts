@@ -100,6 +100,9 @@ export type GlobalOrSpecificOptions = {
 };
 
 type OpenApiDocument = Parameters<typeof openapiTS>[0];
+type OpenApiDocumentSources =
+  | OpenApiDocument
+  | readonly [OpenApiDocument, ...OpenApiDocument[]];
 
 export type ApiConfig<RequireOpenApiObject extends boolean = false> =
   GlobalOrSpecificOptions & {
@@ -122,16 +125,20 @@ export type ApiConfig<RequireOpenApiObject extends boolean = false> =
     exposeToMcp?: boolean;
   } & (true extends RequireOpenApiObject
       ? {
-          /** The explicitly provided openapi document to use.
+          /**
+           * The explicitly provided OpenAPI document or ordered fallback sources.
+           * First source is primary; later sources are tried if loading fails.
            * Required when auto discovery is disabled.
            */
-          openApi: OpenApiDocument;
+          openApi: OpenApiDocumentSources;
         }
       : {
-          /** The explicitly provided openapi document to use.
+          /**
+           * The explicitly provided OpenAPI document or ordered fallback sources.
+           * First source is primary; later sources are tried if loading fails.
            * Required when auto discovery is disabled.
            */
-          openApi?: OpenApiDocument;
+          openApi?: OpenApiDocumentSources;
         });
 
 export const defaultConfig = {
@@ -150,6 +157,14 @@ export const defaultConfig = {
 } as const satisfies ModuleOptions;
 
 export const applyConfig = (config: ModuleOptions) => {
+  for (const [apiName, apiConfig] of Object.entries(config.apis ?? {})) {
+    if (Array.isArray(apiConfig.openApi) && apiConfig.openApi.length === 0) {
+      throw new Error(
+        `The api config property 'openApi' for "${apiName}" must contain at least one source`,
+      );
+    }
+  }
+
   return defu(config, defaultConfig);
 };
 

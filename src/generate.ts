@@ -10,7 +10,10 @@ import {
   type OpenAPI3,
   type OpenAPITSOptions,
 } from 'openapi-typescript';
-import openapiTS from './lib/openapi-typescript';
+import {
+  openapiTSWithFallback,
+  type OpenApiSource,
+} from './lib/openapi-typescript';
 import {
   addImports,
   addServerImports,
@@ -432,7 +435,14 @@ const getOpenApiTs = async ({
     : { ...moduleConfig.openApiTsConfig, ...staticOpenApiTsConfig };
 
   if (apiConfig.openApi) {
-    return await openapiTS(apiConfig.openApi, openApiTsConfig, onSchemaCreated);
+    const sources: readonly OpenApiSource[] = Array.isArray(apiConfig.openApi)
+      ? (apiConfig.openApi as readonly OpenApiSource[])
+      : [apiConfig.openApi as OpenApiSource];
+    return await openapiTSWithFallback(
+      sources,
+      openApiTsConfig,
+      onSchemaCreated,
+    );
   }
 
   const openAPIFilePath = discoverOpenApiObjectFilePath({
@@ -440,8 +450,8 @@ const getOpenApiTs = async ({
     nuxt,
     collectionName,
   });
-  return await openapiTS(
-    new URL(`file://${openAPIFilePath}`),
+  return await openapiTSWithFallback(
+    [new URL(`file://${openAPIFilePath}`)],
     openApiTsConfig,
     onSchemaCreated,
   );
@@ -453,7 +463,7 @@ type DiscoverOpenApiObjectFilePathArgs = {
   collectionName: string;
 };
 
-const discoverOpenApiObjectFilePath = ({
+export const discoverOpenApiObjectFilePath = ({
   moduleConfig,
   nuxt,
   collectionName,

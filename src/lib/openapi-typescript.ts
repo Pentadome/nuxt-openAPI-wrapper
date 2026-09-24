@@ -1,11 +1,13 @@
 // source: https://github.com/openapi-ts/openapi-typescript/blob/0cc7ee77d28359c7901d9cd3b5733b70a050ea49/packages/openapi-typescript/src/index.ts
 // edit: add onSchemaCreated parameter.
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { performance } from 'node:perf_hooks';
 import type { Readable } from 'node:stream';
 import { createConfig } from '@redocly/openapi-core';
 import type ts from 'typescript';
-import { validateAndBundle } from 'openapi-typescript/src/lib/redoc.ts';
+import {
+  OpenApiSourceLoadError,
+  validateAndBundle,
+} from './openapi-validation';
 import {
   debug,
   resolveRef,
@@ -43,6 +45,47 @@ export const COMMENT_HEADER = `/**
  */
 
 `;
+
+export type OpenApiSource = string | URL | OpenAPI3 | Buffer | Readable;
+
+export const openapiTSWithFallback = async (
+  sources: readonly OpenApiSource[],
+  options: OpenAPITSOptions,
+  onSchemaCreated?: (schema: OpenAPI3) => void,
+): Promise<ts.Node[]> => {
+  if (sources.length === 0) {
+    throw new Error('At least one OpenAPI source must be provided');
+  }
+
+  const failures: Array<{ source: OpenApiSource; error: OpenApiSourceLoadError }> = [];
+  for (const source of sources) {
+    try {
+      return await openapiTS(source, options, onSchemaCreated);
+    } catch (sourceError) {
+      if (!(sourceError instanceof OpenApiSourceLoadError)) throw sourceError;
+      if (sources.length === 1) throw sourceError.loadErrors[0]!;
+      failures.push({ source, error: sourceError });
+    }
+  }
+
+  const describeSource = (source: OpenApiSource) => {
+    if (source instanceof URL) return source.href;
+    if (typeof source === 'string' && /^(?:https?:\/\/|file:\/\/)/.test(source)) {
+      return source;
+    }
+    return '[inline OpenAPI document]';
+  };
+  const details = failures
+    .map(
+      ({ source, error }, index) =>
+        `- Source ${index + 1} (${describeSource(source)}): ${error.message}`,
+    )
+    .join('\n');
+  throw new AggregateError(
+    failures.map(({ error }) => error),
+    `Failed to load all configured OpenAPI sources:\n${details}`,
+  );
+};
 
 /**
  * Convert an OpenAPI schema to TypesScript AST
