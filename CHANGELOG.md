@@ -1,5 +1,21 @@
 # Changelog
 
+## v4.2.0
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v4.1.0...v4.2.0)
+
+### 🚀 Enhancements
+
+- Regenerate types when local OpenAPI documents change ([38dc88b](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/38dc88b))
+
+### ✅ Tests
+
+- Type fallback sources as a non-empty tuple ([ebe56ad](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/ebe56ad))
+
+### ❤️ Contributors
+
+- Pentadome
+
 ## v4.1.0
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v4.0.0...v4.1.0)
