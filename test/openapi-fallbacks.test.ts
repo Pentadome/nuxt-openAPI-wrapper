@@ -184,7 +184,7 @@ paths: {}
   });
 
   describe('with generation cache', () => {
-    const generateCached = (rootDir: string, sources: URL[]) =>
+    const generateCached = (rootDir: string, sources: [URL, ...URL[]]) =>
       getOpenApiTs({
         moduleConfig: applyConfig({ openApiTsCache: true, apis: {} }),
         apiConfig: {
