@@ -152,6 +152,27 @@ Cache keys include this library, `openapi-typescript`, TypeScript, and Redocly v
 
 Local and inline documents use content hashes. HTTP documents use response ETags when present, otherwise content hashes. Cache hits skip `openapi-typescript` generation, but source freshness still needs to be checked, so remote documents may still be fetched. When MCP schema exposure is enabled, cache record also stores bundled schema for MCP tools. Cache files can therefore contain generated API declarations and schema data; keep this in mind when overriding `directory` to a git-tracked path. Default path sits under ignored `node_modules`. For APIs configured with multiple fallback sources, only the first source is cached; when a fallback source is used, its output is generated fresh and not cached.
 
+## Watching local OpenAPI documents
+
+During development (`nuxi dev`), the types of an API are regenerated when one of its local OpenAPI documents changes: an auto-discovered document, a `file:` source (including fallback sources) and any local file these reference via `$ref`. This is enabled by default. Disable it for all APIs, or per API:
+
+```ts
+export default defineNuxtConfig({
+  openAPIWrapper: {
+    watch: false,
+    apis: {
+      github: {
+        baseUrl: 'https://api.github.com',
+        // per-API settings override the module setting
+        watch: true,
+      },
+    },
+  },
+});
+```
+
+The directories containing these files are added to Nuxt's [`watch`](https://nuxt.com/docs/api/nuxt-config#watch) option. Inline and remote (HTTP) documents are not watched. A `$ref` to a file in a directory that was not watched yet when the dev server started is picked up after a restart.
+
 ## MCP Integration (AI Agent Support)
 
 This module integrates with [nuxt-mcp-dev](https://github.com/antfu/nuxt-mcp-dev) to expose your OpenAPI schemas as MCP (Model Context Protocol) tools. This allows AI agents like Claude to query your API schemas during development.

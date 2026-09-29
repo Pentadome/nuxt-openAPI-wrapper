@@ -7,6 +7,8 @@ type FakeNuxtOptions = {
   buildDir?: string;
   /** Layer cwd's, highest priority first (like `nuxt.options._layers`). Defaults to `[rootDir]`. */
   layers?: string[];
+  /** Whether Nuxt runs in development mode. Defaults to `false`. */
+  dev?: boolean;
 };
 
 export type FakeNuxt = Nuxt & {
@@ -19,13 +21,17 @@ export const createFakeNuxt = ({
   rootDir,
   buildDir = path.join(rootDir, '.nuxt'),
   layers = [rootDir],
+  dev = false,
 }: FakeNuxtOptions): FakeNuxt => {
   const hooks = new Map<string, Array<(...args: unknown[]) => unknown>>();
 
   const nuxt = {
     options: {
       rootDir,
+      srcDir: path.join(rootDir, 'app'),
       buildDir,
+      dev,
+      watch: [],
       alias: {},
       _layers: layers.map((cwd) => ({ cwd, config: {} })),
     },

@@ -10,6 +10,7 @@ describe('applyConfig', () => {
       },
       exposeToMcp: true,
       openApiTsCache: false,
+      watch: true,
       clients: { nitro: { autoImport: true }, nuxt: { autoImport: true } },
       apis: {},
       openApiTsConfig: {

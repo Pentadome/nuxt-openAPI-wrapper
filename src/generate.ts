@@ -3,7 +3,8 @@
 import type { Nuxt } from 'nuxt/schema';
 import type { ApiConfig, ResolvedConfig } from './config';
 import path from 'node:path';
-import { globSync } from 'node:fs';
+import { globSync, statSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert';
 import {
   astToString,
@@ -15,6 +16,7 @@ import {
   type OpenApiSource,
 } from './lib/openapi-typescript';
 import {
+  collectLocalSourceFiles,
   getCachedOpenApiGeneration,
   resolveOpenApiTsCacheOptions,
 } from './lib/openapi-cache';
@@ -45,6 +47,9 @@ const tsIgnoreError = '//' + ' @ts-ignore-error';
 export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
   const apis = Object.entries(moduleConfig.apis);
   const resolver = createResolver(import.meta.url);
+  const localSourceWatcher = nuxt.options.dev
+    ? createLocalSourceWatcher(nuxt)
+    : undefined;
 
   const addedNuxtClientsDirNames = new Set<string>();
   const addedNitroClients = new Set<{
@@ -76,6 +81,21 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
       apiConfig.exposeToMcp ?? moduleConfig.exposeToMcp;
 
     usesMcp ||= shouldSaveSchemaForMCP;
+
+    const shouldWatch = apiConfig.watch ?? moduleConfig.watch;
+    const watchLocalSources =
+      localSourceWatcher && shouldWatch
+        ? () =>
+            localSourceWatcher.track(collectionName, () =>
+              getLocalOpenApiFilePaths({
+                apiConfig,
+                collectionName,
+                moduleConfig,
+                nuxt,
+              }),
+            )
+        : undefined;
+
     addTypeTemplate(
       {
         filename: openApiTsFilePath as `${string}.d.ts`,
@@ -98,6 +118,9 @@ export const generate = async ({ moduleConfig, nuxt }: GenerateArgs) => {
               error,
             );
             throw error;
+          } finally {
+            // Also after a failed generation, so fixing a broken document is picked up.
+            await watchLocalSources?.();
           }
 
           return `declare module '${typesModuleName}' {
@@ -429,27 +452,32 @@ const staticOpenApiTsConfig = {
   pathParamsAsTypes: false,
 } as const satisfies OpenAPITSOptions;
 
-export const getOpenApiTs = async ({
-  apiConfig,
-  collectionName,
-  moduleConfig,
-  nuxt,
-  onSchemaCreated,
-}: GetOpenApiTsConfigArgs) => {
-  if (!apiConfig.openApi && moduleConfig.autoDiscover === false) {
-    throw new Error(
-      "The api config property 'openApi' is required when auto discovery is disabled",
-    );
-  }
+type ResolveOpenApiArgs = Omit<GetOpenApiTsConfigArgs, 'onSchemaCreated'>;
 
-  const openApiTsConfig = apiConfig.openApiTsConfig
+const resolveOpenApiTsConfig = ({
+  apiConfig,
+  moduleConfig,
+}: Pick<ResolveOpenApiArgs, 'apiConfig' | 'moduleConfig'>): OpenAPITSOptions =>
+  apiConfig.openApiTsConfig
     ? {
         ...toMerged(moduleConfig.openApiTsConfig, apiConfig.openApiTsConfig),
         ...staticOpenApiTsConfig,
       }
     : { ...moduleConfig.openApiTsConfig, ...staticOpenApiTsConfig };
 
-  const sources: readonly OpenApiSource[] = apiConfig.openApi
+const resolveOpenApiSources = ({
+  apiConfig,
+  collectionName,
+  moduleConfig,
+  nuxt,
+}: ResolveOpenApiArgs): readonly OpenApiSource[] => {
+  if (!apiConfig.openApi && moduleConfig.autoDiscover === false) {
+    throw new Error(
+      "The api config property 'openApi' is required when auto discovery is disabled",
+    );
+  }
+
+  return apiConfig.openApi
     ? Array.isArray(apiConfig.openApi)
       ? (apiConfig.openApi as readonly OpenApiSource[])
       : [apiConfig.openApi as OpenApiSource]
@@ -462,6 +490,22 @@ export const getOpenApiTs = async ({
           })}`,
         ),
       ];
+};
+
+export const getOpenApiTs = async ({
+  apiConfig,
+  collectionName,
+  moduleConfig,
+  nuxt,
+  onSchemaCreated,
+}: GetOpenApiTsConfigArgs) => {
+  const sources = resolveOpenApiSources({
+    apiConfig,
+    collectionName,
+    moduleConfig,
+    nuxt,
+  });
+  const openApiTsConfig = resolveOpenApiTsConfig({ apiConfig, moduleConfig });
 
   // Cache identity tracks the first source and its transitive references.
   // Output generated from a fallback source is returned but never cached.
@@ -511,6 +555,114 @@ export const getOpenApiTs = async ({
     onSchemaCreated,
     generate,
   });
+};
+
+/**
+ * Returns the local files the OpenAPI documents of an api consist of: every local (`file:`)
+ * source, including fallbacks, and the local files they reference via `$ref`.
+ */
+export const getLocalOpenApiFilePaths = async (
+  args: ResolveOpenApiArgs,
+): Promise<string[]> => {
+  const sources = resolveOpenApiSources(args);
+  const openApiTsConfig = resolveOpenApiTsConfig(args);
+
+  const filePaths = await Promise.all(
+    sources.map(async (source) => {
+      const filePath = getLocalFilePath(source);
+      if (!filePath) return [];
+      try {
+        return await collectLocalSourceFiles(source, openApiTsConfig);
+      } catch {
+        // e.g. a document that is invalid mid-edit; keep watching the file itself.
+        return [filePath];
+      }
+    }),
+  );
+  return [...new Set(filePaths.flat())];
+};
+
+const getLocalFilePath = (source: OpenApiSource): string | undefined => {
+  if (
+    !(source instanceof URL) &&
+    !(typeof source === 'string' && source.startsWith('file://'))
+  ) {
+    return undefined;
+  }
+  try {
+    const url = new URL(source);
+    return url.protocol === 'file:' ? fileURLToPath(url) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Adds the directories of local OpenAPI files to Nuxt's watcher. Nuxt regenerates all
+ * templates (including the OpenAPI types) when a watched file changes.
+ */
+const createLocalSourceWatcher = (nuxt: Nuxt) => {
+  /** collection name -> tracked file -> mtime at the time of tracking */
+  const trackedFiles = new Map<string, Map<string, number | undefined>>();
+
+  nuxt.hook('builder:watch', (event, changedPath) => {
+    if (event !== 'add' && event !== 'change' && event !== 'unlink') return;
+    const key = toFileKey(path.resolve(nuxt.options.srcDir, changedPath));
+    const collections = [...trackedFiles]
+      .filter(([, files]) =>
+        [...files.keys()].some((x) => toFileKey(x) === key),
+      )
+      .map(([collectionName]) => collectionName);
+    if (collections.length > 0) {
+      logger.info(
+        `OpenAPI document changed, regenerating types for ${collections.map((x) => `"${x}"`).join(', ')}`,
+      );
+    }
+  });
+
+  return {
+    track: async (
+      collectionName: string,
+      collectFilePaths: () => Promise<string[]>,
+    ) => {
+      // Nuxt regenerates templates on every watched change, skip the `$ref` walk when nothing we track changed.
+      const previous = trackedFiles.get(collectionName);
+      if (
+        previous &&
+        [...previous].every(([file, mtime]) => getMtime(file) === mtime)
+      ) {
+        return;
+      }
+
+      let filePaths: string[];
+      try {
+        filePaths = await collectFilePaths();
+      } catch {
+        // e.g. an auto discovered document that does not exist; generation reports the error.
+        return;
+      }
+
+      trackedFiles.set(
+        collectionName,
+        new Map(filePaths.map((file) => [file, getMtime(file)])),
+      );
+      for (const file of filePaths) {
+        // Watch the directory: a watch entry equal to the changed file makes Nuxt restart.
+        const directory = path.dirname(file);
+        if (!nuxt.options.watch.includes(directory)) {
+          nuxt.options.watch.push(directory);
+        }
+      }
+    },
+  };
+};
+
+const getMtime = (file: string) =>
+  statSync(file, { throwIfNoEntry: false })?.mtimeMs;
+
+const toFileKey = (file: string) => {
+  const normalized = path.normalize(file);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 };
 
 type DiscoverOpenApiObjectFilePathArgs = {

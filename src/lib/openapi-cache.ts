@@ -289,9 +289,40 @@ const collectSourceIdentities = async (
     },
   };
   const resolver = new BaseResolver(trackedResolveConfig);
+  const documents = await walkSourceDocuments(source, options, resolver);
+
+  return [...documents]
+    .map(([locator, document]) => identityForSource(document, locator, etags))
+    .sort((a, b) => a.locator.localeCompare(b.locator));
+};
+
+/**
+ * Returns the local files making up `source`: the document itself (when it is a file)
+ * and every local file it references transitively via `$ref`.
+ */
+export const collectLocalSourceFiles = async (
+  source: OpenApiDocument,
+  options: OpenAPITSOptions,
+): Promise<string[]> => {
+  const redocly = await resolveRedoclyConfig(options.redocly);
+  const resolver = new BaseResolver(redocly.resolve);
+  const documents = await walkSourceDocuments(
+    await bufferReadableSource(source),
+    options,
+    resolver,
+  );
+  return [...documents.keys()].filter((locator) => !isHttpLocator(locator));
+};
+
+/** Loads `source` and all documents it references transitively, keyed by normalized locator. */
+const walkSourceDocuments = async (
+  source: OpenApiDocument,
+  options: OpenAPITSOptions,
+  resolver: BaseResolver,
+): Promise<Map<string, Source>> => {
   const absoluteRef = getAbsoluteRef(source, options.cwd);
   const rootDocument = await parseSchema(source, { absoluteRef, resolver });
-  const sources = new Map<string, SourceIdentity>();
+  const sources = new Map<string, Source>();
   const documentsToVisit: Document[] = [rootDocument];
   const processedLocators = new Set<string>();
   const scheduledLocators = new Set<string>();
@@ -303,7 +334,7 @@ const collectSourceIdentities = async (
       const locator = normalizeDocumentLocator(document.source.absoluteRef);
       if (processedLocators.has(locator)) continue;
       processedLocators.add(locator);
-      sources.set(locator, identityForSource(document.source, locator, etags));
+      sources.set(locator, document.source);
 
       for (const ref of findExternalReferences(document.parsed)) {
         const resolvedLocator = normalizeDocumentLocator(
@@ -335,9 +366,7 @@ const collectSourceIdentities = async (
     }
   }
 
-  return [...sources.values()].sort((a, b) =>
-    a.locator.localeCompare(b.locator),
-  );
+  return sources;
 };
 
 const findExternalReferences = (document: unknown): string[] => {

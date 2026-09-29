@@ -109,6 +109,14 @@ export type GlobalOrSpecificOptions = {
   openApiTsCache?: boolean | OpenApiTsCacheConfig;
 
   /**
+   * Regenerate the types when a local OpenAPI document (auto discovered or a `file:` source)
+   * or a local file it references via `$ref` changes. Only active during development.
+   * Module-level settings are defaults for each API; per-API settings override them.
+   * @default true
+   */
+  watch?: boolean;
+
+  /**
    * The [openapi-ts config]{@link https://openapi-ts.dev/cli#flags} to pass to the generator
    * @default { generatePathParams: true, pathParamsAsTypes: false, alphabetize: true, } */
   openApiTsConfig?: OpenAPITSOptions & {
@@ -121,8 +129,7 @@ export type GlobalOrSpecificOptions = {
 
 type OpenApiDocument = Parameters<typeof openapiTS>[0];
 type OpenApiDocumentSources =
-  | OpenApiDocument
-  | readonly [OpenApiDocument, ...OpenApiDocument[]];
+  OpenApiDocument | readonly [OpenApiDocument, ...OpenApiDocument[]];
 
 export type ApiConfig<RequireOpenApiObject extends boolean = false> =
   GlobalOrSpecificOptions & {
@@ -168,6 +175,7 @@ export const defaultConfig = {
   },
   exposeToMcp: true,
   openApiTsCache: false,
+  watch: true,
   clients: { nitro: { autoImport: true }, nuxt: { autoImport: true } },
   apis: {},
   openApiTsConfig: {
