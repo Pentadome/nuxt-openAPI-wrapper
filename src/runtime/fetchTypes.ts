@@ -70,6 +70,23 @@ type GetSupportedHttpMethods<PathInfo extends PlainObject> = {
     : never;
 }[keyof PathInfo];
 
+/**
+ * Picks the JSON media type key of an OpenAPI `content` object.
+ * Prefers `application/json`, falls back to structured syntax suffix types like `application/problem+json`.
+ */
+type JsonContentKey<Content> = [
+  Extract<keyof Content, 'application/json'>,
+] extends [never]
+  ? Extract<keyof Content, `application/${string}+json`>
+  : 'application/json';
+
+/** Resolves to the JSON body type of an OpenAPI `content` object, or `Fallback` when there is no JSON media type. */
+type GetJsonContent<Content, Fallback = unknown> = [
+  JsonContentKey<Content>,
+] extends [never]
+  ? Fallback
+  : Content[JsonContentKey<Content> & keyof Content];
+
 /* eslint-disable @typescript-eslint/no-invalid-void-type -- this is about a response type, so void is valid */
 type GetReponses<
   Operation,
@@ -85,11 +102,9 @@ type GetReponses<
                 }
               ? void
               : Operation['responses'][key] extends {
-                    content: {
-                      'application/json': {};
-                    };
+                    content: infer Content;
                   }
-                ? Operation['responses'][key]['content']['application/json']
+                ? GetJsonContent<Content>
                 : unknown
           : never
         : never;
@@ -99,12 +114,12 @@ type GetReponses<
 
 type GetBody<Operation> = Operation extends {
   requestBody: {
-    content: {
-      'application/json': {};
-    };
+    content: infer Content;
   };
 }
-  ? { body: Operation['requestBody']['content']['application/json'] }
+  ? [JsonContentKey<Content>] extends [never]
+    ? { body?: any }
+    : { body: GetJsonContent<Content> }
   : { body?: any };
 
 type GetPathParams<Operation> = Operation extends {
