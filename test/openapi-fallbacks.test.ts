@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyConfig, type ApiConfig } from '../src/config';
 import { getOpenApiTs } from '../src/generate';
 import { openapiTSWithFallback } from '../src/lib/openapi-typescript';
+import { hasCacheFile } from './helpers/cache-files';
 import { createFakeNuxt } from './helpers/fake-nuxt';
 
 const validDocument = `
@@ -194,14 +194,13 @@ paths: {}
         collectionName: 'fallback',
         nuxt: createFakeNuxt({ rootDir }),
       });
-    const cacheFile = (rootDir: string) =>
+    const cacheDir = (rootDir: string) =>
       path.join(
         rootDir,
         'node_modules',
         '.cache',
         'nuxt-openAPI-wrapper',
         'fallback',
-        'cache.json',
       );
 
     it('caches the first source', async () => {
@@ -215,7 +214,7 @@ paths: {}
       ]);
 
       expect(generated).toContain('getHealth');
-      expect(existsSync(cacheFile(directory))).toBe(true);
+      expect(hasCacheFile(cacheDir(directory))).toBe(true);
     });
 
     it('falls back without caching when the first source cannot be loaded', async () => {
@@ -229,7 +228,7 @@ paths: {}
       ]);
 
       expect(generated).toContain('getHealth');
-      expect(existsSync(cacheFile(directory))).toBe(false);
+      expect(hasCacheFile(cacheDir(directory))).toBe(false);
     });
   });
 

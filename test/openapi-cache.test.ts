@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,6 +10,7 @@ import {
   getCachedOpenApiGeneration,
   resolveOpenApiTsCacheOptions,
 } from '../src/lib/openapi-cache';
+import { findCacheFile } from './helpers/cache-files';
 import { useTempDirectories } from './helpers/temp-dir';
 import { useHttpServers } from './helpers/http-server';
 
@@ -35,7 +37,7 @@ const makeCachedGeneration = (options: {
     },
     options: options.keyOptions ?? {},
     keyOptions: options.keyOptions ?? {},
-    cacheFilePath: path.join(testCacheDirectory, 'fixture', 'cache.json'),
+    cacheDirectory: path.join(testCacheDirectory, 'fixture'),
     version: options.version,
     collectionName: `cache-test-${Math.random()}`,
     onSchemaCreated: options.onSchemaCreated,
@@ -108,7 +110,7 @@ describe('openapi generation cache', () => {
         source,
         options: { transform: transform as OpenAPITSOptions['transform'] },
         keyOptions: { transform: transform as OpenAPITSOptions['transform'] },
-        cacheFilePath: path.join(testCacheDirectory, 'functions', 'cache.json'),
+        cacheDirectory: path.join(testCacheDirectory, 'functions'),
         collectionName: 'function-warning-test',
         suppressFunctionWarning,
         generate,
@@ -149,18 +151,11 @@ describe('openapi generation cache', () => {
 
   it('treats malformed cache records and unwritable cache locations as misses', async () => {
     testCacheDirectory = await makeTempDirectory();
-    const cacheFilePath = path.join(
-      testCacheDirectory,
-      'corrupt',
-      'cache.json',
-    );
-    await mkdir(path.dirname(cacheFilePath), { recursive: true });
-    await writeFile(cacheFilePath, 'not-json');
+    const cacheDirectory = path.join(testCacheDirectory, 'corrupt');
     const generate = vi.fn(async () => ({
       declaration: 'export type Recovered = true;',
     }));
-
-    await expect(
+    const run = (directory: string, collectionName: string) =>
       getCachedOpenApiGeneration({
         source: {
           openapi: '3.1.0',
@@ -169,33 +164,53 @@ describe('openapi generation cache', () => {
         },
         options: {},
         keyOptions: {},
-        cacheFilePath,
-        collectionName: 'corrupt-cache-test',
+        cacheDirectory: directory,
+        collectionName,
         generate,
-      }),
-    ).resolves.toBe('export type Recovered = true;');
+      });
+
+    await run(cacheDirectory, 'corrupt-cache-test');
+    const cacheFilePath = findCacheFile(cacheDirectory)!;
+    await writeFile(cacheFilePath, 'not-json');
+
+    await expect(run(cacheDirectory, 'corrupt-cache-test')).resolves.toBe(
+      'export type Recovered = true;',
+    );
+    expect(generate).toHaveBeenCalledTimes(2);
 
     const record = JSON.parse(await readFile(cacheFilePath, 'utf8')) as {
       declaration: string;
     };
     expect(record.declaration).toBe('export type Recovered = true;');
 
-    const blockedCachePath = path.join(testCacheDirectory, 'blocked');
-    await mkdir(blockedCachePath);
+    // A file where the cache directory should be makes the cache unwritable.
+    const blockedCacheDirectory = path.join(testCacheDirectory, 'blocked');
+    await writeFile(blockedCacheDirectory, '');
     await expect(
-      getCachedOpenApiGeneration({
-        source: {
-          openapi: '3.1.0',
-          info: { title: 'Cache fixture', version: '1.0.0' },
-          paths: {},
-        },
-        options: {},
-        keyOptions: {},
-        cacheFilePath: blockedCachePath,
-        collectionName: 'write-failure-test',
-        generate,
-      }),
+      run(blockedCacheDirectory, 'write-failure-test'),
     ).resolves.toBe('export type Recovered = true;');
+  });
+
+  it('stores records under the cache key and keeps only the latest one', async () => {
+    testCacheDirectory = await makeTempDirectory();
+    const cacheDirectory = path.join(testCacheDirectory, 'fixture');
+    await mkdir(cacheDirectory, { recursive: true });
+    const legacyFile = path.join(cacheDirectory, 'cache.json');
+    await writeFile(legacyFile, '{}');
+
+    const generate = async () => ({ declaration: 'export type X = 1;' });
+    await makeCachedGeneration({ keyOptions: { alphabetize: true }, generate });
+    const first = findCacheFile(cacheDirectory)!;
+    expect(path.basename(first)).toMatch(/^[0-9a-f]{64}\.json$/);
+    expect(existsSync(legacyFile)).toBe(false);
+
+    await makeCachedGeneration({
+      keyOptions: { alphabetize: false },
+      generate,
+    });
+    const second = findCacheFile(cacheDirectory)!;
+    expect(second).not.toBe(first);
+    expect(existsSync(first)).toBe(false);
   });
 
   it('buffers one-shot readable sources before passing them to generation', async () => {
@@ -270,7 +285,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'remote', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'remote'),
       collectionName: 'remote-reference-test',
       generate,
     });
@@ -279,7 +294,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'remote', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'remote'),
       collectionName: 'remote-reference-test',
       generate,
     });
@@ -288,7 +303,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'remote', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'remote'),
       collectionName: 'remote-reference-test',
       generate,
     });
@@ -318,7 +333,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'no-etag', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'no-etag'),
       collectionName: 'no-etag-test',
       generate,
     });
@@ -327,7 +342,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'no-etag', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'no-etag'),
       collectionName: 'no-etag-test',
       generate,
     });
@@ -359,7 +374,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'local', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'local'),
       collectionName: 'local-reference-test',
       generate,
     });
@@ -371,7 +386,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'local', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'local'),
       collectionName: 'local-reference-test',
       generate,
     });
@@ -389,7 +404,7 @@ describe('openapi generation cache', () => {
       source,
       options: {},
       keyOptions: {},
-      cacheFilePath: path.join(testCacheDirectory, 'local', 'cache.json'),
+      cacheDirectory: path.join(testCacheDirectory, 'local'),
       collectionName: 'local-reference-test',
       generate,
     });

@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -11,6 +10,7 @@ import {
 } from '../src/lib/openapi-cache';
 import { staticRoutes, useHttpServers } from './helpers/http-server';
 import { minimalDocument, minimalYaml } from './helpers/specs';
+import { findCacheFile, hasCacheFile } from './helpers/cache-files';
 import { useTempDirectories } from './helpers/temp-dir';
 
 const makeTempDirectory = useTempDirectories();
@@ -27,7 +27,7 @@ const uniqueCollection = () => `edge-case-${collectionCounter++}`;
 
 const setup = async () => {
   const directory = await makeTempDirectory();
-  const cacheFilePath = path.join(directory, 'cache', 'cache.json');
+  const cacheDirectory = path.join(directory, 'cache');
   const generate = vi.fn<Generate>(async () => ({
     declaration: 'export type X = 1;',
   }));
@@ -38,12 +38,12 @@ const setup = async () => {
       source: structuredClone(minimalDocument) as unknown as OpenAPI3,
       options: {},
       keyOptions: {},
-      cacheFilePath,
+      cacheDirectory,
       collectionName: uniqueCollection(),
       generate,
       ...overrides,
     });
-  return { directory, cacheFilePath, generate, run };
+  return { directory, cacheDirectory, generate, run };
 };
 
 describe('generation cache edge cases', () => {
@@ -106,7 +106,7 @@ describe('generation cache edge cases', () => {
   });
 
   it('generates without caching when the options cannot be canonicalized', async () => {
-    const { run, generate, cacheFilePath } = await setup();
+    const { run, generate, cacheDirectory } = await setup();
     const keyOptions = Object.defineProperty({}, 'broken', {
       enumerable: true,
       get: () => {
@@ -118,21 +118,21 @@ describe('generation cache edge cases', () => {
     await run({ keyOptions });
 
     expect(generate).toHaveBeenCalledTimes(2);
-    expect(existsSync(cacheFilePath)).toBe(false);
+    expect(hasCacheFile(cacheDirectory)).toBe(false);
   });
 
   it('generates without caching when the source cannot be resolved', async () => {
-    const { run, generate, cacheFilePath, directory } = await setup();
+    const { run, generate, cacheDirectory, directory } = await setup();
     const source = pathToFileURL(path.join(directory, 'missing.yaml'));
 
     await expect(run({ source })).resolves.toBe('export type X = 1;');
 
     expect(generate).toHaveBeenCalledWith(source, {}, undefined);
-    expect(existsSync(cacheFilePath)).toBe(false);
+    expect(hasCacheFile(cacheDirectory)).toBe(false);
   });
 
   it('generates without caching when an external reference cannot be resolved', async () => {
-    const { run, generate, cacheFilePath, directory } = await setup();
+    const { run, generate, cacheDirectory, directory } = await setup();
     const rootPath = path.join(directory, 'root.yaml');
     await writeFile(
       rootPath,
@@ -145,7 +145,7 @@ describe('generation cache edge cases', () => {
     await run({ source: pathToFileURL(rootPath) });
 
     expect(generate).toHaveBeenCalledTimes(1);
-    expect(existsSync(cacheFilePath)).toBe(false);
+    expect(hasCacheFile(cacheDirectory)).toBe(false);
   });
 
   it('passes a provided redocly config through to the generator', async () => {
@@ -225,9 +225,10 @@ describe('generation cache edge cases', () => {
   });
 
   it('ignores cache records with an invalid schema', async () => {
-    const { run, generate, cacheFilePath } = await setup();
+    const { run, generate, cacheDirectory } = await setup();
     const onSchemaCreated = vi.fn();
     await run({ onSchemaCreated });
+    const cacheFilePath = findCacheFile(cacheDirectory)!;
     const record = JSON.parse(
       await import('node:fs/promises').then((fs) =>
         fs.readFile(cacheFilePath, 'utf8'),

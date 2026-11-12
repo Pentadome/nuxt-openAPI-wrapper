@@ -1,6 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { readFile, rename, mkdir, rm, writeFile } from 'node:fs/promises';
+import {
+  readFile,
+  readdir,
+  rename,
+  mkdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { Readable } from 'node:stream';
 import path from 'node:path';
@@ -17,8 +24,7 @@ import { parseSchema } from 'openapi-typescript/src/lib/redoc.ts';
 export type OpenApiDocument = string | URL | OpenAPI3 | Buffer | Readable;
 
 type CachedGeneration = {
-  formatVersion: 1;
-  key: string;
+  formatVersion: 2;
   declaration: string;
   schema?: OpenAPI3;
 };
@@ -46,7 +52,8 @@ type GetCachedGenerationArgs = {
   source: OpenApiDocument;
   options: OpenAPITSOptions;
   keyOptions: OpenAPITSOptions;
-  cacheFilePath: string;
+  /** Per-API cache directory; records are stored as `<key>.json` inside it. */
+  cacheDirectory: string;
   version?: string | number;
   suppressFunctionWarning?: boolean;
   collectionName: string;
@@ -64,7 +71,7 @@ export const getCachedOpenApiGeneration = async ({
   source,
   options,
   keyOptions,
-  cacheFilePath,
+  cacheDirectory,
   version,
   suppressFunctionWarning,
   collectionName,
@@ -97,7 +104,7 @@ export const getCachedOpenApiGeneration = async ({
       generatorOptions,
     );
     key = hashValue({
-      formatVersion: 1,
+      formatVersion: 2,
       libraryVersion: getPackageVersion('nuxt-openapi-wrapper'),
       openapiTypescriptVersion: getPackageVersion('openapi-typescript'),
       typescriptVersion: getPackageVersion('typescript'),
@@ -113,11 +120,10 @@ export const getCachedOpenApiGeneration = async ({
     return generated.declaration;
   }
 
+  const cacheFilePath = getCacheFilePath(cacheDirectory, key);
+  // The key is part of the file name, so a missing file is a miss without reading anything.
   const cached = await readCache(cacheFilePath);
-  if (
-    cached?.key === key &&
-    (!onSchemaCreated || cached.schema !== undefined)
-  ) {
+  if (cached && (!onSchemaCreated || cached.schema !== undefined)) {
     if (onSchemaCreated && cached.schema) onSchemaCreated(cached.schema);
     return cached.declaration;
   }
@@ -143,12 +149,13 @@ export const getCachedOpenApiGeneration = async ({
         : undefined,
     );
     const record: CachedGeneration = {
-      formatVersion: 1,
-      key,
+      formatVersion: 2,
       declaration: generated.declaration,
       schema: generated.schema ?? schema,
     };
-    if (generated.cacheable !== false) await writeCache(cacheFilePath, record);
+    if (generated.cacheable !== false) {
+      await writeCache(cacheDirectory, cacheFilePath, record);
+    }
     return record;
   })();
 
@@ -508,6 +515,11 @@ const warnAboutFunctions = (
   );
 };
 
+const cacheFileExtension = '.json';
+
+export const getCacheFilePath = (cacheDirectory: string, key: string) =>
+  path.join(cacheDirectory, `${key}${cacheFileExtension}`);
+
 const readCache = async (
   cacheFilePath: string,
 ): Promise<CachedGeneration | undefined> => {
@@ -521,8 +533,7 @@ const readCache = async (
         parsed.schema !== null &&
         !Array.isArray(parsed.schema));
     if (
-      parsed.formatVersion !== 1 ||
-      typeof parsed.key !== 'string' ||
+      parsed.formatVersion !== 2 ||
       typeof parsed.declaration !== 'string' ||
       !schemaIsValid
     ) {
@@ -535,17 +546,42 @@ const readCache = async (
 };
 
 const writeCache = async (
+  cacheDirectory: string,
   cacheFilePath: string,
   record: CachedGeneration,
 ): Promise<void> => {
   const temporaryPath = `${cacheFilePath}.${randomUUID()}.tmp`;
   try {
-    await mkdir(path.dirname(cacheFilePath), { recursive: true });
+    await mkdir(cacheDirectory, { recursive: true });
     await writeFile(temporaryPath, JSON.stringify(record), 'utf8');
     await rename(temporaryPath, cacheFilePath);
+    await removeStaleCacheFiles(cacheDirectory, cacheFilePath);
   } catch {
     // Cache persistence is best-effort; generated output remains valid.
   } finally {
     await rm(temporaryPath, { force: true }).catch(() => undefined);
   }
+};
+
+/** Keeps only the latest record per API directory. */
+const removeStaleCacheFiles = async (
+  cacheDirectory: string,
+  currentFilePath: string,
+): Promise<void> => {
+  const currentFileName = path.basename(currentFilePath);
+  const entries = await readdir(cacheDirectory, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter(
+        (entry) =>
+          entry.isFile() &&
+          entry.name.endsWith(cacheFileExtension) &&
+          entry.name !== currentFileName,
+      )
+      .map((entry) =>
+        rm(path.join(cacheDirectory, entry.name), { force: true }).catch(
+          () => undefined,
+        ),
+      ),
+  );
 };

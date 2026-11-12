@@ -538,17 +538,13 @@ export const getOpenApiTs = async ({
     nuxt.options.rootDir,
     cacheOptions.directory ?? 'node_modules/.cache/nuxt-openAPI-wrapper',
   );
-  const cacheFilePath = path.join(
-    cacheRoot,
-    kebabCase(collectionName),
-    'cache.json',
-  );
+  const cacheDirectory = path.join(cacheRoot, kebabCase(collectionName));
 
   return await getCachedOpenApiGeneration({
     source,
     options: openApiTsConfig,
     keyOptions: openApiTsConfig,
-    cacheFilePath,
+    cacheDirectory,
     version: cacheOptions.version,
     suppressFunctionWarning: cacheOptions.suppressFunctionWarning,
     collectionName,

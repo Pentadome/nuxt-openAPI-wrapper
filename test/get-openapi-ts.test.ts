@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { OpenAPI3 } from 'openapi-typescript';
 import { applyConfig, type ApiConfig, type ModuleOptions } from '../src/config';
 import { getOpenApiTs } from '../src/generate';
+import { hasCacheFile } from './helpers/cache-files';
 import { createFakeNuxt } from './helpers/fake-nuxt';
 import { minimalDocument, minimalYaml } from './helpers/specs';
 import { useTempDirectories } from './helpers/temp-dir';
@@ -189,14 +189,13 @@ describe('getOpenApiTs', () => {
   });
 
   describe('cache', () => {
-    const defaultCacheFile = (rootDir: string, collection: string) =>
+    const defaultCacheDir = (rootDir: string, collection: string) =>
       path.join(
         rootDir,
         'node_modules',
         '.cache',
         'nuxt-openAPI-wrapper',
         collection,
-        'cache.json',
       );
 
     it('regenerates on every call when caching is disabled', async () => {
@@ -205,7 +204,7 @@ describe('getOpenApiTs', () => {
       await run({ rootDir });
 
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(2);
-      expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(false);
+      expect(hasCacheFile(defaultCacheDir(rootDir, 'petstore'))).toBe(false);
     });
 
     it('caches under node_modules/.cache/nuxt-openAPI-wrapper/<kebab-name> by default', async () => {
@@ -221,7 +220,7 @@ describe('getOpenApiTs', () => {
 
       expect(second).toBe(first);
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(1);
-      expect(existsSync(defaultCacheFile(rootDir, 'my-petstore'))).toBe(true);
+      expect(hasCacheFile(defaultCacheDir(rootDir, 'my-petstore'))).toBe(true);
     });
 
     it('resolves a custom cache directory from the Nuxt root', async () => {
@@ -231,11 +230,9 @@ describe('getOpenApiTs', () => {
         moduleOptions: { openApiTsCache: { directory: 'custom-cache' } },
       });
 
-      expect(
-        existsSync(
-          path.join(rootDir, 'custom-cache', 'petstore', 'cache.json'),
-        ),
-      ).toBe(true);
+      expect(hasCacheFile(path.join(rootDir, 'custom-cache', 'petstore'))).toBe(
+        true,
+      );
     });
 
     it('lets the api setting override the module setting', async () => {
@@ -249,7 +246,7 @@ describe('getOpenApiTs', () => {
       await run(args);
 
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(2);
-      expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(false);
+      expect(hasCacheFile(defaultCacheDir(rootDir, 'petstore'))).toBe(false);
     });
 
     it('can be enabled per api only', async () => {
@@ -273,7 +270,7 @@ describe('getOpenApiTs', () => {
 
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(1);
       expect(lastCall().sources).toEqual([minimalYaml, minimalYaml]);
-      expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(true);
+      expect(hasCacheFile(defaultCacheDir(rootDir, 'petstore'))).toBe(true);
     });
 
     it('does not cache output generated from a fallback source', async () => {
@@ -299,7 +296,7 @@ describe('getOpenApiTs', () => {
       }
 
       expect(openapiTSWithFallbackMock).toHaveBeenCalledTimes(2);
-      expect(existsSync(defaultCacheFile(rootDir, 'petstore'))).toBe(false);
+      expect(hasCacheFile(defaultCacheDir(rootDir, 'petstore'))).toBe(false);
     });
   });
 });

@@ -146,7 +146,7 @@ export default defineNuxtConfig({
 });
 ```
 
-Set `openApiTsCache: true` to use defaults. A per-API object inherits module settings and overrides selected fields; per-API `false` disables caching. Relative `directory` values resolve from Nuxt `rootDir`; the API name is appended so each client gets its own latest cache record. Default directory is `node_modules/.cache/nuxt-openAPI-wrapper`.
+Set `openApiTsCache: true` to use defaults. A per-API object inherits module settings and overrides selected fields; per-API `false` disables caching. Relative `directory` values resolve from Nuxt `rootDir`; the API name is appended so each client gets its own cache directory. Records are stored as `<cache-key>.json`, so a cache hit or miss is determined from the file name alone; only the latest record per API is kept. Default directory is `node_modules/.cache/nuxt-openAPI-wrapper`.
 
 Cache keys include this library, `openapi-typescript`, TypeScript, and Redocly versions; optional `version`; resolved `openApiTsConfig` values; and root plus transitive `$ref` document identities. Function-valued config entries are omitted from the key. A warning explains this when caching is enabled; bump `version` whenever function behavior changes, or set `suppressFunctionWarning: true` to silence it.
 
