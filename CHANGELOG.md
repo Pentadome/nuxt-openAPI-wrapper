@@ -1,5 +1,17 @@
 # Changelog
 
+## v4.2.1
+
+[compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v4.2.0...v4.2.1)
+
+### 🔥 Performance
+
+- Store generation cache key in file name ([9d6f99f](https://github.com/Pentadome/nuxt-openAPI-wrapper/commit/9d6f99f))
+
+### ❤️ Contributors
+
+- Pentadome ([@Pentadome](https://github.com/Pentadome))
+
 ## v4.2.0
 
 [compare changes](https://github.com/Pentadome/nuxt-openAPI-wrapper/compare/v4.1.0...v4.2.0)
